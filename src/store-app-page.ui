@@ -463,6 +463,7 @@
                   <object class="GtkButton" id="write_review_button">
                     <property name="visible">True</property>
                     <property name="halign">start</property>
+                    <signal name="clicked" handler="review_cb" object="StoreAppPage" swapped="yes"/>
                     <style>
                       <class name="app-page-write-review-button"/>
                     </style>

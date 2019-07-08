@@ -15,6 +15,7 @@
 #include "store-channel-combo.h"
 #include "store-image.h"
 #include "store-rating-label.h"
+#include "store-review-dialog.h"
 #include "store-review-summary.h"
 #include "store-review-view.h"
 #include "store-screenshot-view.h"
@@ -220,6 +221,16 @@ remove_cb (StoreAppPage *self)
 }
 
 static void
+review_cb (StoreAppPage *self)
+{
+    StoreReviewDialog *dialog = store_review_dialog_new ();
+    gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+    gtk_window_set_transient_for (GTK_WINDOW (dialog), GTK_WINDOW (gtk_widget_get_toplevel (GTK_WIDGET (self))));
+
+    gtk_dialog_run (GTK_DIALOG (dialog));
+}
+
+static void
 store_app_page_dispose (GObject *object)
 {
     StoreAppPage *self = STORE_APP_PAGE (object);
@@ -310,6 +321,7 @@ store_app_page_class_init (StoreAppPageClass *klass)
     gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (klass), install_cb);
     gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (klass), launch_cb);
     gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (klass), remove_cb);
+    gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (klass), review_cb);
 }
 
 static void

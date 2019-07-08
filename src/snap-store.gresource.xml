@@ -14,6 +14,7 @@
     <file preprocess="xml-stripblanks">store-channel-combo.ui</file>
     <file preprocess="xml-stripblanks">store-home-page.ui</file>
     <file preprocess="xml-stripblanks">store-installed-page.ui</file>
+    <file preprocess="xml-stripblanks">store-review-dialog.ui</file>
     <file preprocess="xml-stripblanks">store-review-summary.ui</file>
     <file preprocess="xml-stripblanks">store-review-view.ui</file>
     <file preprocess="xml-stripblanks">store-screenshot-view.ui</file>

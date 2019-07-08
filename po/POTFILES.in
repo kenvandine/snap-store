@@ -7,5 +7,6 @@ src/store-home-page.ui
 src/store-installed-page.c
 src/store-installed-page.ui
 src/store-model.c
+src/store-review-dialog.ui
 src/store-review-view.ui
 src/store-window.ui
