@@ -94,6 +94,29 @@ get_image_data_free (GetImageData *data)
     g_clear_pointer (&data, g_free);
 }
 
+typedef struct
+{
+    StoreApp *app;
+    StoreOdrsReview *review;
+} FeedbackData;
+
+static FeedbackData *
+feedback_data_new (StoreApp *app, StoreOdrsReview *review)
+{
+    FeedbackData *data = g_new0 (FeedbackData, 1);
+    data->app = g_object_ref (app);
+    data->review = g_object_ref (review);
+    return data;
+}
+
+static void
+feedback_data_free (FeedbackData *data)
+{
+    g_object_unref (data->app);
+    g_object_unref (data->review);
+    g_free (data);
+}
+
 static void
 set_review_counts (StoreModel *self, StoreApp *app)
 {
@@ -129,6 +152,24 @@ load_cached_reviews (StoreModel *self, const gchar *name)
     }
 
     return g_steal_pointer (&reviews);
+}
+
+static void
+cache_reviews (StoreModel *self, StoreApp *app)
+{
+    if (self->cache == NULL)
+        return;
+
+    g_autoptr(JsonBuilder) builder = json_builder_new ();
+    json_builder_begin_array (builder);
+    GPtrArray *reviews = store_app_get_reviews (app);
+    for (guint i = 0; i < reviews->len; i++) {
+        StoreOdrsReview *review = g_ptr_array_index (reviews, i);
+        json_builder_add_value (builder, store_odrs_review_to_json (review));
+    }
+    json_builder_end_array (builder);
+    g_autoptr(JsonNode) root = json_builder_get_root (builder);
+    store_cache_insert_json (self->cache, "reviews", store_app_get_name (app), FALSE, root, NULL, NULL);
 }
 
 static const gchar *
@@ -439,25 +480,76 @@ reviews_cb (GObject *object, GAsyncResult *result, gpointer user_data)
         g_task_return_error (task, g_steal_pointer (&error));
         return;
     }
-    // FIXME: Store and use review key
 
     StoreModel *self = g_task_get_source_object (task);
     StoreApp *app = g_task_get_task_data (task);
 
     store_app_set_reviews (app, reviews);
+    store_app_set_review_key (app, user_skey); // FIXME: cache?
 
-    /* Save in cache */
-    if (self->cache != NULL) {
-        g_autoptr(JsonBuilder) builder = json_builder_new ();
-        json_builder_begin_array (builder);
-        for (guint i = 0; i < reviews->len; i++) {
-            StoreOdrsReview *review = g_ptr_array_index (reviews, i);
-            json_builder_add_value (builder, store_odrs_review_to_json (review));
-        }
-        json_builder_end_array (builder);
-        g_autoptr(JsonNode) root = json_builder_get_root (builder);
-        store_cache_insert_json (self->cache, "reviews", store_app_get_name (app), FALSE, root, NULL, NULL);
+    cache_reviews (self, app);
+    if (self->cache != NULL)
+        store_app_save_to_cache (STORE_APP (app), self->cache);
+
+    g_task_return_boolean (task, TRUE);
+}
+
+static void
+downvote_cb (GObject *object, GAsyncResult *result, gpointer user_data)
+{
+    g_autoptr(GTask) task = user_data;
+
+    g_autoptr(GError) error = NULL;
+    if (!store_odrs_client_downvote_finish (STORE_ODRS_CLIENT (object), result, &error)) {
+        g_task_return_error (task, g_steal_pointer (&error));
+        return;
     }
+
+    StoreModel *self = g_task_get_source_object (task);
+    FeedbackData *data = g_task_get_task_data (task);
+
+    store_odrs_review_set_voted (data->review, TRUE);
+    cache_reviews (self, data->app);
+
+    g_task_return_boolean (task, TRUE);
+}
+
+static void
+report_cb (GObject *object, GAsyncResult *result, gpointer user_data)
+{
+    g_autoptr(GTask) task = user_data;
+
+    g_autoptr(GError) error = NULL;
+    if (!store_odrs_client_report_finish (STORE_ODRS_CLIENT (object), result, &error)) {
+        g_task_return_error (task, g_steal_pointer (&error));
+        return;
+    }
+
+    StoreModel *self = g_task_get_source_object (task);
+    FeedbackData *data = g_task_get_task_data (task);
+
+    store_odrs_review_set_voted (data->review, TRUE);
+    cache_reviews (self, data->app);
+
+    g_task_return_boolean (task, TRUE);
+}
+
+static void
+upvote_cb (GObject *object, GAsyncResult *result, gpointer user_data)
+{
+    g_autoptr(GTask) task = user_data;
+
+    g_autoptr(GError) error = NULL;
+    if (!store_odrs_client_upvote_finish (STORE_ODRS_CLIENT (object), result, &error)) {
+        g_task_return_error (task, g_steal_pointer (&error));
+        return;
+    }
+
+    StoreModel *self = g_task_get_source_object (task);
+    FeedbackData *data = g_task_get_task_data (task);
+
+    store_odrs_review_set_voted (data->review, TRUE);
+    cache_reviews (self, data->app);
 
     g_task_return_boolean (task, TRUE);
 }
@@ -972,6 +1064,84 @@ store_model_update_reviews_async (StoreModel *self, StoreApp *app,
 
 gboolean
 store_model_update_reviews_finish (StoreModel *self, GAsyncResult *result, GError **error)
+{
+    g_return_val_if_fail (STORE_IS_MODEL (self), FALSE);
+    g_return_val_if_fail (g_task_is_valid (G_TASK (result), self), FALSE);
+
+    return g_task_propagate_boolean (G_TASK (result), error);
+}
+
+void
+store_model_downvote_review_async (StoreModel *self, StoreApp *app, StoreOdrsReview *review,
+                                   GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
+{
+    g_return_if_fail (STORE_IS_MODEL (self));
+
+    g_autoptr(GTask) task = g_task_new (self, cancellable, callback, callback_data);
+
+    if (self->odrs_client == NULL) {
+        g_task_return_boolean (task, TRUE);
+        return;
+    }
+
+    g_task_set_task_data (task, feedback_data_new (app, review), (GDestroyNotify) feedback_data_free);
+    store_odrs_client_downvote_async (self->odrs_client, store_app_get_review_key (app), store_app_get_appstream_id (app), store_odrs_review_get_id (review), cancellable, downvote_cb, g_steal_pointer (&task)); // FIXME: Combine cancellables
+}
+
+gboolean
+store_model_downvote_review_finish (StoreModel *self, GAsyncResult *result, GError **error)
+{
+    g_return_val_if_fail (STORE_IS_MODEL (self), FALSE);
+    g_return_val_if_fail (g_task_is_valid (G_TASK (result), self), FALSE);
+
+    return g_task_propagate_boolean (G_TASK (result), error);
+}
+
+void
+store_model_report_review_async (StoreModel *self, StoreApp *app, StoreOdrsReview *review,
+                                 GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
+{
+    g_return_if_fail (STORE_IS_MODEL (self));
+
+    g_autoptr(GTask) task = g_task_new (self, cancellable, callback, callback_data);
+
+    if (self->odrs_client == NULL) {
+        g_task_return_boolean (task, TRUE);
+        return;
+    }
+
+    g_task_set_task_data (task, feedback_data_new (app, review), (GDestroyNotify) feedback_data_free);
+    store_odrs_client_report_async (self->odrs_client, store_app_get_review_key (app), store_app_get_appstream_id (app), store_odrs_review_get_id (review), cancellable, report_cb, g_steal_pointer (&task)); // FIXME: Combine cancellables
+}
+
+gboolean
+store_model_report_review_finish (StoreModel *self, GAsyncResult *result, GError **error)
+{
+    g_return_val_if_fail (STORE_IS_MODEL (self), FALSE);
+    g_return_val_if_fail (g_task_is_valid (G_TASK (result), self), FALSE);
+
+    return g_task_propagate_boolean (G_TASK (result), error);
+}
+
+void
+store_model_upvote_review_async (StoreModel *self, StoreApp *app, StoreOdrsReview *review,
+                                 GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
+{
+    g_return_if_fail (STORE_IS_MODEL (self));
+
+    g_autoptr(GTask) task = g_task_new (self, cancellable, callback, callback_data);
+
+    if (self->odrs_client == NULL) {
+        g_task_return_boolean (task, TRUE);
+        return;
+    }
+
+    g_task_set_task_data (task, feedback_data_new (app, review), (GDestroyNotify) feedback_data_free);
+    store_odrs_client_upvote_async (self->odrs_client, store_app_get_review_key (app), store_app_get_appstream_id (app), store_odrs_review_get_id (review), cancellable, upvote_cb, g_steal_pointer (&task)); // FIXME: Combine cancellables
+}
+
+gboolean
+store_model_upvote_review_finish (StoreModel *self, GAsyncResult *result, GError **error)
 {
     g_return_val_if_fail (STORE_IS_MODEL (self), FALSE);
     g_return_val_if_fail (g_task_is_valid (G_TASK (result), self), FALSE);

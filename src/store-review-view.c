@@ -26,17 +26,27 @@ struct _StoreReviewView
 
 G_DEFINE_TYPE (StoreReviewView, store_review_view, GTK_TYPE_BOX)
 
+enum
+{
+    SIGNAL_DOWNVOTE,
+    SIGNAL_REPORT,
+    SIGNAL_UPVOTE,
+    SIGNAL_LAST
+};
+
+static guint signals[SIGNAL_LAST] = { 0 };
+
 static void
-feedback_cb (StoreReviewView *self G_GNUC_UNUSED, const gchar *type)
+feedback_cb (StoreReviewView *self, const gchar *type)
 {
     if (g_strcmp0 (type, "y") == 0) {
-        // FIXME
+        g_signal_emit (self, signals[SIGNAL_UPVOTE], 0);
     }
     else if (g_strcmp0 (type, "n") == 0) {
-        // FIXME
+        g_signal_emit (self, signals[SIGNAL_DOWNVOTE], 0);
     }
     else if (g_strcmp0 (type, "r") == 0) {
-        // FIXME
+        g_signal_emit (self, signals[SIGNAL_REPORT], 0);
     }
 }
 
@@ -64,6 +74,33 @@ store_review_view_class_init (StoreReviewViewClass *klass)
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreReviewView, summary_label);
 
     gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (klass), feedback_cb);
+
+    signals[SIGNAL_DOWNVOTE] = g_signal_new ("downvote",
+                                             G_TYPE_FROM_CLASS (G_OBJECT_CLASS (klass)),
+                                             G_SIGNAL_RUN_LAST,
+                                             0,
+                                             NULL, NULL,
+                                             NULL,
+                                             G_TYPE_NONE,
+                                             0);
+
+    signals[SIGNAL_REPORT] = g_signal_new ("report",
+                                           G_TYPE_FROM_CLASS (G_OBJECT_CLASS (klass)),
+                                           G_SIGNAL_RUN_LAST,
+                                           0,
+                                           NULL, NULL,
+                                           NULL,
+                                           G_TYPE_NONE,
+                                           0);
+
+    signals[SIGNAL_UPVOTE] = g_signal_new ("upvote",
+                                           G_TYPE_FROM_CLASS (G_OBJECT_CLASS (klass)),
+                                           G_SIGNAL_RUN_LAST,
+                                           0,
+                                           NULL, NULL,
+                                           NULL,
+                                           G_TYPE_NONE,
+                                           0);
 }
 
 static void
@@ -107,6 +144,7 @@ store_review_view_set_review (StoreReviewView *self, StoreOdrsReview *review)
        author_date_text = g_strdup (store_odrs_review_get_author (review));
     gtk_label_set_label (self->author_date_label, author_date_text);
     g_object_bind_property (review, "description", self->description_label, "label", G_BINDING_SYNC_CREATE);
+    g_object_bind_property (review, "voted", self->feedback_label, "visible", G_BINDING_SYNC_CREATE | G_BINDING_INVERT_BOOLEAN);
 }
 
 StoreOdrsReview *

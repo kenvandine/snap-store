@@ -48,4 +48,8 @@ void            mock_review_set_description  (MockReview *review, const gchar *d
 
 void            mock_review_set_rating       (MockReview *review, gint64 rating);
 
+void            mock_review_add_voter        (MockReview *review, const gchar *user_hash);
+
+gboolean        mock_review_has_voter        (MockReview *review, const gchar *user_hash);
+
 G_END_DECLS

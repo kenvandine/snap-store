@@ -36,6 +36,7 @@ struct _MockReview
     gint64 upvote_count;
     gint64 downvote_count;
     gint64 report_count;
+    GList *voters;
 };
 
 static MockReview *
@@ -56,6 +57,7 @@ mock_review_free (MockReview *review)
     g_free (review->summary);
     g_free (review->description);
     g_free (review);
+    g_list_free_full (review->voters, g_free);
 }
 
 struct _MockApp
@@ -265,6 +267,10 @@ fetch_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *path 
         json_builder_add_string_value (builder, review->summary);
         json_builder_set_member_name (builder, "description");
         json_builder_add_string_value (builder, review->description);
+        if (mock_review_has_voter (review, user_hash)) {
+            json_builder_set_member_name (builder, "vote_id");
+            json_builder_add_int_value (builder, 1);
+        }
         json_builder_end_object (builder);
     }
     if (app == NULL || app->reviews->len == 0) {
@@ -284,7 +290,7 @@ fetch_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *path 
     soup_message_set_status (msg, SOUP_STATUS_OK);
     soup_message_set_response (msg, "application/json; charset=utf-8", SOUP_MEMORY_TAKE, g_steal_pointer (&json_text), json_text_length);
 
-    g_printerr ("FETCH %s\n", app->id);
+    g_printerr ("FETCH %s\n", app_id);
 }
 
 static void
@@ -352,7 +358,7 @@ submit_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *path
 
     respond (msg, TRUE, NULL);
 
-    g_printerr ("REVIEW %s\n", app->id);
+    g_printerr ("REVIEW %s\n", app_id);
     g_printerr ("  Summary: %s\n", summary);
     g_autofree gchar *escaped_description = g_strescape (description, NULL);
     g_printerr ("  Description: %s\n", escaped_description);
@@ -405,18 +411,20 @@ feedback_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *pa
         return;
     }
 
-    if (g_strcmp0 (path, "/upvote") == 0) {
+    if (g_str_has_suffix (path, "/upvote")) {
         g_printerr ("UPVOTE %s\n", review->app->id);
         review->upvote_count++;
     }
-    else if (g_strcmp0 (path, "/downvote") == 0) {
+    else if (g_str_has_suffix (path, "/downvote")) {
         g_printerr ("DOWNVOTE %s\n", review->app->id);
         review->downvote_count++;
     }
-    else if (g_strcmp0 (path, "/report") == 0) {
+    else if (g_str_has_suffix (path, "/report")) {
         g_printerr ("REPORT %s\n", review->app->id);
         review->report_count++;
     }
+
+    mock_review_add_voter (review, user_hash);
 
     respond (msg, TRUE, NULL);
 }
@@ -594,6 +602,25 @@ void
 mock_review_set_rating (MockReview *review, gint64 rating)
 {
     review->rating = rating;
+}
+
+void
+mock_review_add_voter (MockReview *review, const gchar *user_hash)
+{
+    if (!mock_review_has_voter (review, user_hash))
+        review->voters = g_list_append (review->voters, g_strdup (user_hash));
+}
+
+gboolean
+mock_review_has_voter (MockReview *review, const gchar *user_hash)
+{
+    for (GList *link = review->voters; link != NULL; link = link->next) {
+        const gchar *u = link->data;
+        if (g_strcmp0 (u, user_hash) == 0)
+            return TRUE;
+    }
+
+    return FALSE;
 }
 
 int

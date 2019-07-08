@@ -161,6 +161,8 @@ get_reviews_cb (GObject *object, GAsyncResult *result, gpointer user_data)
         store_odrs_review_set_date_created (review, date_created);
         store_odrs_review_set_summary (review, json_object_get_string_member (object, "summary"));
         store_odrs_review_set_description (review, json_object_get_string_member (object, "description"));
+        if (json_object_has_member (object, "vote_id"))
+            store_odrs_review_set_voted (review, json_object_get_int_member (object, "vote_id") != 0);
         g_ptr_array_add (reviews, g_steal_pointer (&review));
     }
 
@@ -236,7 +238,7 @@ static void
 send_feedback (StoreOdrsClient *self, const char *method, GAsyncReadyCallback result_callback, const gchar *user_skey, const gchar *app_id, gint64 review_id,
                GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
 {
-    g_autofree gchar *uri= g_strdup_printf ("%s/1.0/reviews/api/%s", self->server_uri, method);
+    g_autofree gchar *uri = g_strdup_printf ("%s/1.0/reviews/api/%s", self->server_uri, method);
     g_autoptr(SoupMessage) message = soup_message_new ("POST", uri);
 
     g_autoptr(JsonBuilder) builder = json_builder_new ();

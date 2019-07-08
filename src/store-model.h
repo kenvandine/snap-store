@@ -15,6 +15,7 @@
 #include "store-cache.h"
 #include "store-category.h"
 #include "store-channel.h"
+#include "store-odrs-review.h"
 #include "store-snap-app.h"
 
 G_BEGIN_DECLS
@@ -60,6 +61,21 @@ void           store_model_update_reviews_async           (StoreModel *model, St
                                                            GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
 
 gboolean       store_model_update_reviews_finish          (StoreModel *model, GAsyncResult *result, GError **error);
+
+void           store_model_downvote_review_async          (StoreModel *model, StoreApp *app, StoreOdrsReview *review,
+                                                           GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
+
+gboolean       store_model_downvote_review_finish         (StoreModel *model, GAsyncResult *result, GError **error);
+
+void           store_model_report_review_async            (StoreModel *model, StoreApp *app, StoreOdrsReview *review,
+                                                           GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
+
+gboolean       store_model_report_review_finish           (StoreModel *model, GAsyncResult *result, GError **error);
+
+void           store_model_upvote_review_async            (StoreModel *model, StoreApp *app, StoreOdrsReview *review,
+                                                           GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
+
+gboolean       store_model_upvote_review_finish           (StoreModel *model, GAsyncResult *result, GError **error);
 
 void           store_model_search_async                   (StoreModel *model, const gchar *query,
                                                            GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);

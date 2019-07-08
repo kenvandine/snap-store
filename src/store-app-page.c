@@ -175,6 +175,27 @@ refresh_cb (GObject *object, GAsyncResult *result, gpointer user_data G_GNUC_UNU
 }
 
 static void
+upvote_cb (StoreAppPage *self, StoreReviewView *view)
+{
+    StoreOdrsReview *review = store_review_view_get_review (view);
+    store_model_upvote_review_async (store_page_get_model (STORE_PAGE (self)), self->app, review, NULL, NULL, NULL);
+}
+
+static void
+downvote_cb (StoreAppPage *self, StoreReviewView *view)
+{
+    StoreOdrsReview *review = store_review_view_get_review (view);
+    store_model_downvote_review_async (store_page_get_model (STORE_PAGE (self)), self->app, review, NULL, NULL, NULL);
+}
+
+static void
+report_cb (StoreAppPage *self, StoreReviewView *view)
+{
+    StoreOdrsReview *review = store_review_view_get_review (view);
+    store_model_report_review_async (store_page_get_model (STORE_PAGE (self)), self->app, review, NULL, NULL, NULL);
+}
+
+static void
 store_app_page_set_reviews (StoreAppPage *self, GPtrArray *reviews)
 {
     g_autoptr(GList) children = gtk_container_get_children (GTK_CONTAINER (self->reviews_box));
@@ -187,6 +208,9 @@ store_app_page_set_reviews (StoreAppPage *self, GPtrArray *reviews)
         StoreReviewView *view = store_review_view_new ();
         gtk_widget_show (GTK_WIDGET (view));
         store_review_view_set_review (view, review);
+        g_signal_connect_object (view, "downvote", G_CALLBACK (downvote_cb), self, G_CONNECT_SWAPPED);
+        g_signal_connect_object (view, "upvote", G_CALLBACK (upvote_cb), self, G_CONNECT_SWAPPED);
+        g_signal_connect_object (view, "report", G_CALLBACK (report_cb), self, G_CONNECT_SWAPPED);
         gtk_container_add (GTK_CONTAINER (self->reviews_box), GTK_WIDGET (view));
     }
     gtk_widget_set_visible (GTK_WIDGET (self->reviews_box), reviews->len > 0);

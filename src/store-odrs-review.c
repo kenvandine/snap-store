@@ -19,6 +19,7 @@ struct _StoreOdrsReview
     gint64 id;
     gint64 rating;
     gchar *summary;
+    gboolean voted;
 };
 
 enum
@@ -30,6 +31,7 @@ enum
     PROP_ID,
     PROP_RATING,
     PROP_SUMMARY,
+    PROP_VOTED,
     PROP_LAST
 };
 
@@ -73,6 +75,9 @@ store_odrs_review_get_property (GObject *object, guint prop_id, GValue *value, G
     case PROP_SUMMARY:
         g_value_set_string (value, self->summary);
         break;
+    case PROP_VOTED:
+        g_value_set_boolean (value, self->voted);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -103,6 +108,9 @@ store_odrs_review_set_property (GObject *object, guint prop_id, const GValue *va
         break;
     case PROP_SUMMARY:
         store_odrs_review_set_summary (self, g_value_get_string (value));
+        break;
+    case PROP_VOTED:
+        store_odrs_review_set_voted (self, g_value_get_boolean (value));
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -135,6 +143,9 @@ store_odrs_review_class_init (StoreOdrsReviewClass *klass)
     g_object_class_install_property (G_OBJECT_CLASS (klass),
                                      PROP_SUMMARY,
                                      g_param_spec_string ("summary", NULL, NULL, NULL, G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_VOTED,
+                                     g_param_spec_boolean ("voted", NULL, NULL, FALSE, G_PARAM_READWRITE));
 }
 
 static void
@@ -171,6 +182,8 @@ store_odrs_review_new_from_json (JsonNode *node)
         store_odrs_review_set_rating (self, json_object_get_int_member (object, "rating"));
     if (json_object_has_member (object, "summary"))
         store_odrs_review_set_summary (self, json_object_get_string_member (object, "summary"));
+    if (json_object_has_member (object, "voted"))
+        store_odrs_review_set_voted (self, json_object_get_boolean_member (object, "voted"));
 
     return self;
 }
@@ -196,6 +209,8 @@ store_odrs_review_to_json (StoreOdrsReview *self)
     json_builder_add_int_value (builder, self->rating);
     json_builder_set_member_name (builder, "summary");
     json_builder_add_string_value (builder, self->summary);
+    json_builder_set_member_name (builder, "voted");
+    json_builder_add_boolean_value (builder, self->voted);
     json_builder_end_object (builder);
 
     return json_builder_get_root (builder);
@@ -309,4 +324,23 @@ store_odrs_review_get_summary (StoreOdrsReview *self)
 {
     g_return_val_if_fail (STORE_IS_ODRS_REVIEW (self), NULL);
     return self->summary;
+}
+
+void
+store_odrs_review_set_voted (StoreOdrsReview *self, gboolean voted)
+{
+    g_return_if_fail (STORE_IS_ODRS_REVIEW (self));
+
+    if (self->voted == voted)
+        return;
+    self->voted = voted;
+
+    g_object_notify (G_OBJECT (self), "voted");
+}
+
+gboolean
+store_odrs_review_get_voted (StoreOdrsReview *self)
+{
+    g_return_val_if_fail (STORE_IS_ODRS_REVIEW (self), FALSE);
+    return self->voted;
 }

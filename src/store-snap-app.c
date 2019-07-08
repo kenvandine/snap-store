@@ -114,6 +114,8 @@ store_snap_app_save_to_cache (StoreApp *self, StoreCache *cache)
     json_builder_add_string_value (builder, store_app_get_publisher (self));
     json_builder_set_member_name (builder, "publisher-validated");
     json_builder_add_boolean_value (builder, store_app_get_publisher_validated (self));
+    json_builder_set_member_name (builder, "review-key");
+    json_builder_add_string_value (builder, store_app_get_review_key (self));
     json_builder_set_member_name (builder, "screenshots");
     json_builder_begin_array (builder);
     GPtrArray *screenshots = store_app_get_screenshots (self);
@@ -170,6 +172,8 @@ store_snap_app_update_from_cache (StoreApp *self, StoreCache *cache)
     store_app_set_name (STORE_APP (self), json_object_get_string_member (object, "name"));
     store_app_set_publisher (STORE_APP (self), json_object_get_string_member (object, "publisher"));
     store_app_set_publisher_validated (STORE_APP (self), json_object_get_boolean_member (object, "publisher-validated"));
+    if (json_object_has_member (object, "review-key"))
+        store_app_set_review_key (STORE_APP (self), json_object_get_string_member (object, "review-key"));
     g_autoptr(GPtrArray) screenshots = g_ptr_array_new_with_free_func (g_object_unref);
     JsonArray *screenshots_array = json_object_get_array_member (object, "screenshots");
     for (guint i = 0; i < json_array_get_length (screenshots_array); i++) {

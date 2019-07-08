@@ -31,6 +31,7 @@ typedef struct
     gint64 review_count_three_star;
     gint64 review_count_four_star;
     gint64 review_count_five_star;
+    gchar *review_key;
     GPtrArray *reviews;
     GPtrArray *screenshots;
     gchar *summary;
@@ -62,6 +63,7 @@ enum
     PROP_REVIEW_COUNT_FOUR_STAR,
     PROP_REVIEW_COUNT_FIVE_STAR,
     PROP_REVIEWS,
+    PROP_REVIEW_KEY,
     PROP_SCREENSHOTS,
     PROP_SUMMARY,
     PROP_TITLE,
@@ -89,6 +91,7 @@ store_app_dispose (GObject *object)
     g_clear_object (&priv->progress);
     g_clear_pointer (&priv->publisher, g_free);
     g_clear_pointer (&priv->reviews, g_ptr_array_unref);
+    g_clear_pointer (&priv->review_key, g_free);
     g_clear_pointer (&priv->screenshots, g_ptr_array_unref);
     g_clear_pointer (&priv->summary, g_free);
     g_clear_pointer (&priv->title, g_free);
@@ -145,9 +148,6 @@ store_app_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
     case PROP_REVIEWS:
         g_value_set_boxed (value, priv->reviews);
         break;
-    case PROP_SCREENSHOTS:
-        g_value_set_boxed (value, priv->screenshots);
-        break;
     case PROP_REVIEW_AVERAGE:
         g_value_set_int (value, store_app_get_review_average (self));
         break;
@@ -168,6 +168,12 @@ store_app_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
         break;
     case PROP_REVIEW_COUNT_FIVE_STAR:
         g_value_set_int64 (value, priv->review_count_five_star);
+        break;
+    case PROP_REVIEW_KEY:
+        g_value_set_string (value, priv->review_key);
+        break;
+    case PROP_SCREENSHOTS:
+        g_value_set_boxed (value, priv->screenshots);
         break;
     case PROP_SUMMARY:
         g_value_set_string (value, priv->summary);
@@ -233,9 +239,6 @@ store_app_set_property (GObject *object, guint prop_id, const GValue *value, GPa
     case PROP_REVIEWS:
         store_app_set_reviews (self, g_value_get_boxed (value));
         break;
-    case PROP_SCREENSHOTS:
-        store_app_set_screenshots (self, g_value_get_boxed (value));
-        break;
     case PROP_REVIEW_COUNT_ONE_STAR:
         store_app_set_review_count_one_star (self, g_value_get_int64 (value));
         break;
@@ -250,6 +253,12 @@ store_app_set_property (GObject *object, guint prop_id, const GValue *value, GPa
         break;
     case PROP_REVIEW_COUNT_FIVE_STAR:
         store_app_set_review_count_five_star (self, g_value_get_int64 (value));
+        break;
+    case PROP_REVIEW_KEY:
+        store_app_set_review_key (self, g_value_get_string (value));
+        break;
+    case PROP_SCREENSHOTS:
+        store_app_set_screenshots (self, g_value_get_boxed (value));
         break;
     case PROP_SUMMARY:
         store_app_set_summary (self, g_value_get_string (value));
@@ -336,6 +345,9 @@ store_app_class_init (StoreAppClass *klass)
     g_object_class_install_property (G_OBJECT_CLASS (klass),
                                      PROP_REVIEWS,
                                      g_param_spec_boxed ("reviews", NULL, NULL, G_TYPE_PTR_ARRAY, G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_REVIEW_KEY,
+                                     g_param_spec_string ("review-key", NULL, NULL, NULL, G_PARAM_READWRITE));
     g_object_class_install_property (G_OBJECT_CLASS (klass),
                                      PROP_SCREENSHOTS,
                                      g_param_spec_boxed ("screenshots", NULL, NULL, G_TYPE_PTR_ARRAY, G_PARAM_READWRITE));
@@ -815,6 +827,29 @@ store_app_set_review_count_five_star (StoreApp *self, gint64 count)
     g_object_notify (G_OBJECT (self), "review-count-five-star");
     g_object_notify (G_OBJECT (self), "review-count");
     g_object_notify (G_OBJECT (self), "review-average");
+}
+
+void
+store_app_set_review_key (StoreApp *self, const gchar *key)
+{
+    StoreAppPrivate *priv = store_app_get_instance_private (self);
+
+    g_return_if_fail (STORE_IS_APP (self));
+
+    g_clear_pointer (&priv->review_key, g_free);
+    priv->review_key = g_strdup (key);
+
+    g_object_notify (G_OBJECT (self), "review-key");
+}
+
+const gchar *
+store_app_get_review_key (StoreApp *self)
+{
+    StoreAppPrivate *priv = store_app_get_instance_private (self);
+
+    g_return_val_if_fail (STORE_IS_APP (self), NULL);
+
+    return priv->review_key;
 }
 
 void

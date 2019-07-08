@@ -46,4 +46,8 @@ void             store_odrs_review_set_summary      (StoreOdrsReview *review, co
 
 const gchar     *store_odrs_review_get_summary      (StoreOdrsReview *review);
 
+void             store_odrs_review_set_voted        (StoreOdrsReview *review, gboolean voted);
+
+gboolean         store_odrs_review_get_voted        (StoreOdrsReview *review);
+
 G_END_DECLS

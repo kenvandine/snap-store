@@ -101,6 +101,10 @@ void           store_app_set_review_count_four_star  (StoreApp *app, const gint6
 
 void           store_app_set_review_count_five_star  (StoreApp *app, const gint64 count);
 
+void           store_app_set_review_key              (StoreApp *app, const gchar *key);
+
+const gchar   *store_app_get_review_key              (StoreApp *app);
+
 void           store_app_set_reviews                 (StoreApp *app, GPtrArray *reviews);
 
 GPtrArray     *store_app_get_reviews                 (StoreApp *app);
