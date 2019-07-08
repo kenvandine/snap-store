@@ -23,6 +23,7 @@ G_DEFINE_TYPE (MockOdrsServer, mock_odrs_server, SOUP_TYPE_SERVER)
 
 struct _MockReview
 {
+    MockApp *app;
     gint64 id;
     gint64 rating;
     gchar *locale;
@@ -38,9 +39,10 @@ struct _MockReview
 };
 
 static MockReview *
-mock_review_new (void)
+mock_review_new (MockApp *app)
 {
     MockReview *review = g_new0 (MockReview, 1);
+    review->app = app;
     return review;
 }
 
@@ -151,6 +153,8 @@ ratings_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *pat
 
     soup_message_set_status (msg, SOUP_STATUS_OK);
     soup_message_set_response (msg, "application/json; charset=utf-8", SOUP_MEMORY_TAKE, g_steal_pointer (&json_text), json_text_length);
+
+    g_printerr ("RATINGS\n");
 }
 
 static JsonNode *
@@ -279,6 +283,8 @@ fetch_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *path 
 
     soup_message_set_status (msg, SOUP_STATUS_OK);
     soup_message_set_response (msg, "application/json; charset=utf-8", SOUP_MEMORY_TAKE, g_steal_pointer (&json_text), json_text_length);
+
+    g_printerr ("FETCH %s\n", app->id);
 }
 
 static void
@@ -336,7 +342,7 @@ submit_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *path
     MockApp *app = mock_odrs_server_add_app (self, app_id);
     MockReview *review = mock_app_add_review (app);
     mock_review_set_locale (review, locale);
-    mock_review_set_version (review, distro);
+    mock_review_set_distro (review, distro);
     mock_review_set_version (review, version);
     mock_review_set_user_display (review, user_display);
     mock_review_set_date_created (review, g_date_time_to_unix (date_created));
@@ -345,6 +351,11 @@ submit_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *path
     mock_review_set_rating (review, rating);
 
     respond (msg, TRUE, NULL);
+
+    g_printerr ("REVIEW %s\n", app->id);
+    g_printerr ("  Summary: %s\n", summary);
+    g_autofree gchar *escaped_description = g_strescape (description, NULL);
+    g_printerr ("  Description: %s\n", escaped_description);
 }
 
 static void
@@ -395,12 +406,15 @@ feedback_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *pa
     }
 
     if (g_strcmp0 (path, "/upvote") == 0) {
+        g_printerr ("UPVOTE %s\n", review->app->id);
         review->upvote_count++;
     }
     else if (g_strcmp0 (path, "/downvote") == 0) {
+        g_printerr ("DOWNVOTE %s\n", review->app->id);
         review->downvote_count++;
     }
     else if (g_strcmp0 (path, "/report") == 0) {
+        g_printerr ("REPORT %s\n", review->app->id);
         review->report_count++;
     }
 
@@ -511,7 +525,7 @@ mock_odrs_server_find_app (MockOdrsServer *self, const gchar *id)
 MockReview *
 mock_app_add_review (MockApp *app)
 {
-    MockReview *review = mock_review_new ();
+    MockReview *review = mock_review_new (app);
     g_ptr_array_add (app->reviews, review);
     return review;
 }
