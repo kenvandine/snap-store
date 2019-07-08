@@ -270,58 +270,48 @@ store_app_set_property (GObject *object, guint prop_id, const GValue *value, GPa
 }
 
 static void
-install_string_property (StoreAppClass *klass, guint property_id, const gchar *name)
-{
-    g_object_class_install_property (G_OBJECT_CLASS (klass),
-                                     property_id,
-                                     g_param_spec_string (name, NULL, NULL, NULL, G_PARAM_READWRITE));
-}
-
-static void
-install_array_property (StoreAppClass *klass, guint property_id, const gchar *name)
-{
-    g_object_class_install_property (G_OBJECT_CLASS (klass),
-                                     property_id,
-                                     g_param_spec_boxed (name, NULL, NULL, G_TYPE_PTR_ARRAY, G_PARAM_READWRITE));
-}
-
-static void
-install_object_property (StoreAppClass *klass, guint property_id, const gchar *name, GType type)
-{
-    g_object_class_install_property (G_OBJECT_CLASS (klass),
-                                     property_id,
-                                     g_param_spec_object (name, NULL, NULL, type, G_PARAM_READWRITE));
-}
-
-static void
-install_boolean_property (StoreAppClass *klass, guint property_id, const gchar *name)
-{
-    g_object_class_install_property (G_OBJECT_CLASS (klass),
-                                     property_id,
-                                     g_param_spec_boolean (name, NULL, NULL, FALSE, G_PARAM_READWRITE));
-}
-
-static void
 store_app_class_init (StoreAppClass *klass)
 {
     G_OBJECT_CLASS (klass)->dispose = store_app_dispose;
     G_OBJECT_CLASS (klass)->get_property = store_app_get_property;
     G_OBJECT_CLASS (klass)->set_property = store_app_set_property;
 
-    install_object_property (klass, PROP_BANNER, "banner", store_media_get_type ());
-    install_array_property (klass, PROP_CHANNELS, "channels");
-    install_string_property (klass, PROP_CONTACT, "contact");
-    install_string_property (klass, PROP_DESCRIPTION, "description");
-    install_object_property (klass, PROP_ICON, "icon", store_media_get_type ());
-    install_boolean_property (klass, PROP_INSTALLED, "installed");
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_BANNER,
+                                     g_param_spec_object ("banner", NULL, NULL, store_media_get_type (), G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_CHANNELS,
+                                     g_param_spec_boxed ("channels", NULL, NULL, G_TYPE_PTR_ARRAY, G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_CONTACT,
+                                     g_param_spec_string ("contact", NULL, NULL, NULL, G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_DESCRIPTION,
+                                     g_param_spec_string ("description", NULL, NULL, NULL, G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_ICON,
+                                     g_param_spec_object ("icon", NULL, NULL, store_media_get_type (), G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_INSTALLED,
+                                     g_param_spec_boolean ("installed", NULL, NULL, FALSE, G_PARAM_READWRITE));
     g_object_class_install_property (G_OBJECT_CLASS (klass),
                                      PROP_INSTALLED_SIZE,
                                      g_param_spec_int64 ("installed-size", NULL, NULL, G_MININT64, G_MAXINT64, 0, G_PARAM_READWRITE));
-    install_string_property (klass, PROP_LICENSE, "license");
-    install_string_property (klass, PROP_NAME, "name");
-    install_object_property (klass, PROP_PROGRESS, "progress", store_progress_get_type ());
-    install_string_property (klass, PROP_PUBLISHER, "publisher");
-    install_boolean_property (klass, PROP_PUBLISHER_VALIDATED, "publisher-validated");
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_LICENSE,
+                                     g_param_spec_string ("license", NULL, NULL, NULL, G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_NAME,
+                                     g_param_spec_string ("name", NULL, NULL, NULL, G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_PROGRESS,
+                                     g_param_spec_object ("progress", NULL, NULL, store_progress_get_type (), G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_PUBLISHER,
+                                     g_param_spec_string ("publisher", NULL, NULL, NULL, G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_PUBLISHER_VALIDATED,
+                                     g_param_spec_boolean ("publisher-validated", NULL, NULL, FALSE, G_PARAM_READWRITE));
     g_object_class_install_property (G_OBJECT_CLASS (klass),
                                      PROP_REVIEW_AVERAGE,
                                      g_param_spec_int ("review-average", NULL, NULL, G_MININT, G_MAXINT, 0, G_PARAM_READABLE));
@@ -343,14 +333,24 @@ store_app_class_init (StoreAppClass *klass)
     g_object_class_install_property (G_OBJECT_CLASS (klass),
                                      PROP_REVIEW_COUNT_FIVE_STAR,
                                      g_param_spec_int64 ("review-count-five-star", NULL, NULL, G_MININT64, G_MAXINT64, 0, G_PARAM_READWRITE));
-    install_array_property (klass, PROP_REVIEWS, "reviews");
-    install_array_property (klass, PROP_SCREENSHOTS, "screenshots");
-    install_string_property (klass, PROP_SUMMARY, "summary");
-    install_string_property (klass, PROP_TITLE, "title");
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_REVIEWS,
+                                     g_param_spec_boxed ("reviews", NULL, NULL, G_TYPE_PTR_ARRAY, G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_SCREENSHOTS,
+                                     g_param_spec_boxed ("screenshots", NULL, NULL, G_TYPE_PTR_ARRAY, G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_SUMMARY,
+                                     g_param_spec_string ("summary", NULL, NULL, NULL, G_PARAM_READWRITE));
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_TITLE,
+                                     g_param_spec_string ("title", NULL, NULL, NULL, G_PARAM_READWRITE));
     g_object_class_install_property (G_OBJECT_CLASS (klass),
                                      PROP_UPDATED_DATE,
                                      g_param_spec_boxed ("updated-date", NULL, NULL, G_TYPE_DATE_TIME, G_PARAM_READWRITE));
-    install_string_property (klass, PROP_VERSION, "version");
+    g_object_class_install_property (G_OBJECT_CLASS (klass),
+                                     PROP_VERSION,
+                                     g_param_spec_string ("version", NULL, NULL, NULL, G_PARAM_READWRITE));
 }
 
 static void
