@@ -112,12 +112,15 @@
     background-color: #0e8420;
 }
 
-.app-page-install-button-label {
-    color: #ffffff;
+.app-page-install-button-box {
     padding-top: 6px;
     padding-bottom: 6px;
     padding-left: 16px;
     padding-right: 16px;
+}
+
+.app-page-install-button-label {
+    color: #ffffff;
 }
 
 .app-page-launch-button {
@@ -144,12 +147,15 @@
     background-color: #c7162b;
 }
 
-.app-page-remove-button-label {
-    color: #ffffff;
+.app-page-remove-button-box {
     padding-top: 6px;
     padding-bottom: 6px;
     padding-left: 16px;
     padding-right: 16px;
+}
+
+.app-page-remove-button-label {
+    color: #ffffff;
 }
 
 .app-page-review-box {

@@ -120,7 +120,7 @@
                             <property name="visible">True</property>
                             <property name="label" translatable="yes" comments="Label on button to launch apps">Launch</property>
                             <style>
-                              <class name="app-page-remove-button-label"/>
+                              <class name="app-page-launch-button-label"/>
                             </style>
                           </object>
                         </child>
@@ -137,6 +137,10 @@
                           <object class="GtkBox">
                             <property name="visible">True</property>
                             <property name="orientation">horizontal</property>
+                            <property name="spacing">6</property>
+                            <style>
+                              <class name="app-page-remove-button-box"/>
+                            </style>
                             <child>
                               <object class="GtkLabel" id="remove_label">
                                 <property name="visible">True</property>
@@ -166,6 +170,10 @@
                           <object class="GtkBox">
                             <property name="visible">True</property>
                             <property name="orientation">horizontal</property>
+                            <property name="spacing">6</property>
+                            <style>
+                              <class name="app-page-install-button-box"/>
+                            </style>
                             <child>
                               <object class="GtkLabel" id="install_label">
                                 <property name="visible">True</property>
