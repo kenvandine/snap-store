@@ -33,11 +33,13 @@ struct _StoreAppPage
     GtkLabel *details_version_label;
     StoreImage *icon_image;
     GtkButton *install_button;
+    GtkSpinner *install_spinner;
     GtkButton *launch_button;
     GtkLabel *publisher_label;
     GtkImage *publisher_validated_image;
     StoreRatingLabel *rating_label;
     GtkButton *remove_button;
+    GtkSpinner *remove_spinner;
     GtkBox *review_count_label;
     StoreReviewSummary *review_summary;
     GtkBox *reviews_box;
@@ -108,6 +110,22 @@ ratings_total_to_label (GBinding *binding G_GNUC_UNUSED, const GValue *from_valu
     }
     else
         g_value_set_string (to_value, "");
+    return TRUE;
+}
+
+static gboolean
+progress_to_button_sensitive (GBinding *binding G_GNUC_UNUSED, const GValue *from_value, GValue *to_value, gpointer user_data G_GNUC_UNUSED)
+{
+    StoreProgress *progress = g_value_get_object (from_value);
+    g_value_set_boolean (to_value, progress == NULL);
+    return TRUE;
+}
+
+static gboolean
+progress_to_spinner_visible (GBinding *binding G_GNUC_UNUSED, const GValue *from_value, GValue *to_value, gpointer user_data G_GNUC_UNUSED)
+{
+    StoreProgress *progress = g_value_get_object (from_value);
+    g_value_set_boolean (to_value, progress != NULL);
     return TRUE;
 }
 
@@ -239,11 +257,13 @@ store_app_page_class_init (StoreAppPageClass *klass)
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, details_version_label);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, icon_image);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, install_button);
+    gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, install_spinner);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, launch_button);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, publisher_label);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, publisher_validated_image);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, rating_label);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, remove_button);
+    gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, remove_spinner);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, review_count_label);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, review_summary);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppPage, reviews_box);
@@ -320,9 +340,15 @@ store_app_page_set_app (StoreAppPage *self, StoreApp *app)
     g_object_bind_property (app, "installed", self->channel_combo, "visible", G_BINDING_SYNC_CREATE | G_BINDING_INVERT_BOOLEAN);
     g_object_bind_property (app, "channels", self->channel_combo, "channels", G_BINDING_SYNC_CREATE);
 
-    g_object_bind_property (app, "installed", self->launch_button, "visible", G_BINDING_SYNC_CREATE);
+    g_object_bind_property (app, "installed", self->launch_button, "visible", G_BINDING_SYNC_CREATE); // FIXME: Disable/hide when removing (add launchable,installable,removable properties)
+
     g_object_bind_property (app, "installed", self->remove_button, "visible", G_BINDING_SYNC_CREATE);
+    g_object_bind_property_full (app, "progress", self->remove_button, "sensitive", G_BINDING_SYNC_CREATE, progress_to_button_sensitive, NULL, NULL, NULL);
+    g_object_bind_property_full (app, "progress", self->remove_spinner, "visible", G_BINDING_SYNC_CREATE, progress_to_spinner_visible, NULL, NULL, NULL);
+
     g_object_bind_property (app, "installed", self->install_button, "visible", G_BINDING_SYNC_CREATE | G_BINDING_INVERT_BOOLEAN);
+    g_object_bind_property_full (app, "progress", self->install_button, "sensitive", G_BINDING_SYNC_CREATE, progress_to_button_sensitive, NULL, NULL, NULL);
+    g_object_bind_property_full (app, "progress", self->install_spinner, "visible", G_BINDING_SYNC_CREATE, progress_to_spinner_visible, NULL, NULL, NULL);
 
     gtk_widget_hide (GTK_WIDGET (self->reviews_box));
 

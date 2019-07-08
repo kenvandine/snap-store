@@ -23,6 +23,7 @@ typedef struct
     gint64 installed_size;
     gchar *license;
     gchar *name;
+    StoreProgress *progress;
     gchar *publisher;
     gboolean publisher_validated;
     gint64 review_count_one_star;
@@ -50,6 +51,7 @@ enum
     PROP_INSTALLED_SIZE,
     PROP_LICENSE,
     PROP_NAME,
+    PROP_PROGRESS,
     PROP_PUBLISHER,
     PROP_PUBLISHER_VALIDATED,
     PROP_REVIEW_AVERAGE,
@@ -84,6 +86,7 @@ store_app_dispose (GObject *object)
     g_clear_object (&priv->icon);
     g_clear_pointer (&priv->license, g_free);
     g_clear_pointer (&priv->name, g_free);
+    g_clear_object (&priv->progress);
     g_clear_pointer (&priv->publisher, g_free);
     g_clear_pointer (&priv->reviews, g_ptr_array_unref);
     g_clear_pointer (&priv->screenshots, g_ptr_array_unref);
@@ -129,6 +132,9 @@ store_app_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
         break;
     case PROP_NAME:
         g_value_set_string (value, priv->name);
+        break;
+    case PROP_PROGRESS:
+        g_value_set_object (value, priv->progress);
         break;
     case PROP_PUBLISHER:
         g_value_set_string (value, priv->publisher);
@@ -214,6 +220,9 @@ store_app_set_property (GObject *object, guint prop_id, const GValue *value, GPa
         break;
     case PROP_NAME:
         store_app_set_name (self, g_value_get_string (value));
+        break;
+    case PROP_PROGRESS:
+        store_app_set_progress (self, g_value_get_object (value));
         break;
     case PROP_PUBLISHER:
         store_app_set_publisher (self, g_value_get_string (value));
@@ -310,6 +319,7 @@ store_app_class_init (StoreAppClass *klass)
                                      g_param_spec_int64 ("installed-size", NULL, NULL, G_MININT64, G_MAXINT64, 0, G_PARAM_READWRITE));
     install_string_property (klass, PROP_LICENSE, "license");
     install_string_property (klass, PROP_NAME, "name");
+    install_object_property (klass, PROP_PROGRESS, "progress", store_progress_get_type ());
     install_string_property (klass, PROP_PUBLISHER, "publisher");
     install_boolean_property (klass, PROP_PUBLISHER_VALIDATED, "publisher-validated");
     g_object_class_install_property (G_OBJECT_CLASS (klass),
@@ -643,6 +653,27 @@ store_app_get_name (StoreApp *self)
     g_return_val_if_fail (STORE_IS_APP (self), NULL);
 
     return priv->name;
+}
+
+void
+store_app_set_progress (StoreApp *self, StoreProgress *progress)
+{
+    StoreAppPrivate *priv = store_app_get_instance_private (self);
+
+    g_return_if_fail (STORE_IS_APP (self));
+
+    if (g_set_object (&priv->progress, progress))
+        g_object_notify (G_OBJECT (self), "progress");
+}
+
+StoreProgress *
+store_app_get_progress (StoreApp *self)
+{
+    StoreAppPrivate *priv = store_app_get_instance_private (self);
+
+    g_return_val_if_fail (STORE_IS_APP (self), NULL);
+
+    return priv->progress;
 }
 
 void

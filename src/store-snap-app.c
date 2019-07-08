@@ -24,12 +24,20 @@ install_cb (GObject *object, GAsyncResult *result, gpointer user_data)
     GTask *task = user_data;
 
     g_autoptr(GError) error = NULL;
-    if (!snapd_client_install2_finish (SNAPD_CLIENT (object), result, &error)) {
-        if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-            return;
+    gboolean r = snapd_client_install2_finish (SNAPD_CLIENT (object), result, &error);
+    if (!r && g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
+    StoreSnapApp *app = g_task_get_source_object (task);
+
+    store_app_set_progress (STORE_APP (app), NULL);
+
+    if (!r) {
         g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to install snap: %s", error->message);
         return;
     }
+
+    store_app_set_installed (STORE_APP (app), TRUE);
 
     g_task_return_boolean (task, TRUE);
 }
@@ -115,12 +123,20 @@ remove_cb (GObject *object, GAsyncResult *result, gpointer user_data)
     GTask *task = user_data;
 
     g_autoptr(GError) error = NULL;
-    if (!snapd_client_remove_finish (SNAPD_CLIENT (object), result, &error)) {
-        if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-            return;
+    gboolean r = snapd_client_remove_finish (SNAPD_CLIENT (object), result, &error);
+    if (!r && g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
+    StoreSnapApp *app = g_task_get_source_object (task);
+
+    store_app_set_progress (STORE_APP (app), NULL);
+
+    if (!r) {
         g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to remove snap: %s", error->message);
         return;
     }
+
+    store_app_set_installed (STORE_APP (app), FALSE);
 
     g_task_return_boolean (task, TRUE);
 }
@@ -139,6 +155,9 @@ static void
 store_snap_app_install_async (StoreApp *app, StoreChannel *channel G_GNUC_UNUSED, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
 {
     StoreSnapApp *self = STORE_SNAP_APP (app);
+
+    g_autoptr(StoreProgress) progress = store_progress_new ();
+    store_app_set_progress (app, progress);
 
     g_autoptr(SnapdClient) client = snapd_client_new ();
     snapd_client_set_socket_path (client, self->snapd_socket_path);
@@ -182,6 +201,9 @@ static void
 store_snap_app_remove_async (StoreApp *app, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
 {
     StoreSnapApp *self = STORE_SNAP_APP (app);
+
+    g_autoptr(StoreProgress) progress = store_progress_new ();
+    store_app_set_progress (app, progress);
 
     g_autoptr(SnapdClient) client = snapd_client_new ();
     snapd_client_set_socket_path (client, self->snapd_socket_path);
