@@ -1067,7 +1067,10 @@ store_model_install_async (StoreModel *self, StoreApp *app, StoreChannel *channe
     snapd_client_set_socket_path (client, self->snapd_socket_path);
     GTask *task = g_task_new (self, cancellable, callback, callback_data); // FIXME: Need to combine cancellables?
     g_task_set_task_data (task, g_object_ref (app), g_object_unref);
-    snapd_client_install2_async (client, SNAPD_INSTALL_FLAGS_NONE, store_app_get_name (app), NULL, NULL, NULL, NULL, cancellable, install_cb, task); // FIXME: channel
+    const gchar *channel_name = NULL;
+    if (channel != NULL)
+        store_channel_get_name (channel);
+    snapd_client_install2_async (client, SNAPD_INSTALL_FLAGS_NONE, store_app_get_name (app), channel_name, NULL, NULL, NULL, cancellable, install_cb, task);
 }
 
 gboolean
