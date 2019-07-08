@@ -24,6 +24,7 @@ struct _StoreAppInstalledTile
     StoreRatingLabel *rating_label;
     GtkLabel *size_label;
     GtkLabel *summary_label;
+    GtkBox *title_box;
     GtkLabel *title_label;
 
     StoreApp *app;
@@ -105,6 +106,7 @@ store_app_installed_tile_class_init (StoreAppInstalledTileClass *klass)
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppInstalledTile, rating_label);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppInstalledTile, size_label);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppInstalledTile, summary_label);
+    gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppInstalledTile, title_box);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreAppInstalledTile, title_label);
 
     gtk_widget_class_bind_template_callback (GTK_WIDGET_CLASS (klass), button_release_event_cb);
@@ -168,4 +170,11 @@ store_app_installed_tile_set_model (StoreAppInstalledTile *self, StoreModel *mod
 {
     g_return_if_fail (STORE_IS_APP_INSTALLED_TILE (self));
     store_image_set_model (self->icon_image, model);
+}
+
+GtkWidget *
+store_app_installed_tile_get_title_box (StoreAppInstalledTile *self)
+{
+    g_return_val_if_fail (STORE_IS_APP_INSTALLED_TILE (self), NULL);
+    return GTK_WIDGET (self->title_box);
 }

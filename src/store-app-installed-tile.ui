@@ -19,57 +19,55 @@
           </object>
         </child>
         <child>
-          <object class="GtkBox">
+          <object class="GtkBox" id="title_box">
             <property name="visible">True</property>
             <property name="orientation">vertical</property>
-            <property name="spacing">16</property>
+            <property name="spacing">6</property>
+            <child>
+              <object class="GtkLabel" id="title_label">
+                <property name="visible">True</property>
+                <property name="halign">start</property>
+                <property name="max-width-chars">20</property>
+                <property name="ellipsize">end</property>
+                <property name="xalign">0</property>
+                <style>
+                  <class name="app-installed-tile-title-label"/>
+                </style>
+              </object>
+            </child>
             <child>
               <object class="GtkBox">
                 <property name="visible">True</property>
-                <property name="orientation">vertical</property>
+                <property name="orientation">horizontal</property>
                 <property name="spacing">6</property>
                 <child>
-                  <object class="GtkLabel" id="title_label">
+                  <object class="GtkLabel" id="publisher_label">
                     <property name="visible">True</property>
                     <property name="halign">start</property>
+                    <property name="max-width-chars">20</property>
                     <property name="ellipsize">end</property>
+                    <property name="xalign">0</property>
                     <style>
-                      <class name="app-installed-tile-title-label"/>
+                      <class name="app-installed-tile-publisher-label"/>
                     </style>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkBox">
-                    <property name="visible">True</property>
-                    <property name="orientation">horizontal</property>
-                    <property name="spacing">6</property>
-                    <child>
-                      <object class="GtkLabel" id="publisher_label">
-                        <property name="visible">True</property>
-                        <property name="halign">start</property>
-                        <property name="ellipsize">end</property>
-                        <style>
-                          <class name="app-installed-tile-publisher-label"/>
-                        </style>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkImage" id="publisher_validated_image">
-                        <property name="visible">False</property>
-                        <property name="resource">/io/snapcraft/Store/developer-verified.svg</property>
-                        <style>
-                          <class name="pubisher-verified-image"/>
-                        </style>
-                      </object>
-                    </child>
+                  <object class="GtkImage" id="publisher_validated_image">
+                    <property name="visible">False</property>
+                    <property name="resource">/io/snapcraft/Store/developer-verified.svg</property>
+                    <style>
+                      <class name="pubisher-verified-image"/>
+                    </style>
                   </object>
                 </child>
-                <child>
-                  <object class="StoreRatingLabel" id="rating_label">
-                    <property name="visible">True</property>
-                    <property name="halign">start</property>
-                  </object>
-                </child>
+              </object>
+            </child>
+            <child>
+              <object class="StoreRatingLabel" id="rating_label">
+                <property name="visible">True</property>
+                <property name="halign">start</property>
+                <property name="xalign">0</property>
               </object>
             </child>
           </object>

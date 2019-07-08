@@ -19,6 +19,7 @@ struct _StoreInstalledPage
 
     GtkBox *app_box;
     GtkLabel *count_label;
+    GtkSizeGroup *title_size_group;
 };
 
 enum
@@ -110,6 +111,7 @@ store_installed_page_class_init (StoreInstalledPageClass *klass)
 
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreInstalledPage, app_box);
     gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreInstalledPage, count_label);
+    gtk_widget_class_bind_template_child (GTK_WIDGET_CLASS (klass), StoreInstalledPage, title_size_group);
 
     signals[SIGNAL_APP_ACTIVATED] = g_signal_new ("app-activated",
                                                   G_TYPE_FROM_CLASS (G_OBJECT_CLASS (klass)),
@@ -147,6 +149,7 @@ store_installed_page_set_apps (StoreInstalledPage *self, GPtrArray *apps)
     while (n_tiles < apps->len) {
         StoreAppInstalledTile *tile = store_app_installed_tile_new ();
         gtk_widget_show (GTK_WIDGET (tile));
+        gtk_size_group_add_widget (self->title_size_group, store_app_installed_tile_get_title_box (tile));
         g_signal_connect_object (tile, "activated", G_CALLBACK (tile_activated_cb), self, G_CONNECT_SWAPPED);
         store_app_installed_tile_set_model (tile, store_page_get_model (STORE_PAGE (self)));
         gtk_container_add (GTK_CONTAINER (self->app_box), GTK_WIDGET (tile));
