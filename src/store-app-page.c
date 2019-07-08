@@ -352,7 +352,7 @@ store_app_page_set_app (StoreAppPage *self, StoreApp *app)
 
     gtk_widget_hide (GTK_WIDGET (self->reviews_box));
 
-    store_model_update_reviews_async (store_page_get_model (STORE_PAGE (self)), app, self->cancellable, NULL, NULL);
+    store_model_update_reviews_async (store_page_get_model (STORE_PAGE (self)), app, self->cancellable, NULL, NULL); // FIXME: Update when appstream ID changes
 
     store_screenshot_view_set_app (self->screenshot_view, app);
     GPtrArray *screenshots = store_app_get_screenshots (app);
