@@ -24,30 +24,18 @@ struct _StoreAppClass
 {
     GObjectClass parent_class;
 
-    void      (*install_async)     (StoreApp *app, StoreChannel *channel, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
-    gboolean  (*install_finish)    (StoreApp *app, GAsyncResult *result, GError **error);
     gboolean  (*launch)            (StoreApp *app, GError **error);
     void      (*refresh_async)     (StoreApp *app, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
     gboolean  (*refresh_finish)    (StoreApp *app, GAsyncResult *result, GError **error);
-    void      (*remove_async)      (StoreApp *app, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
-    gboolean  (*remove_finish)     (StoreApp *app, GAsyncResult *result, GError **error);
     void      (*save_to_cache)     (StoreApp *app, StoreCache *cache);
     void      (*update_from_cache) (StoreApp *app, StoreCache *cache);
 };
-
-void           store_app_install_async               (StoreApp *app, StoreChannel *channel, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
-
-gboolean       store_app_install_finish              (StoreApp *app, GAsyncResult *result, GError **error);
 
 gboolean       store_app_launch                      (StoreApp *app, GError **error);
 
 void           store_app_refresh_async               (StoreApp *app, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
 
 gboolean       store_app_refresh_finish              (StoreApp *app, GAsyncResult *result, GError **error);
-
-void           store_app_remove_async                (StoreApp *app, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
-
-gboolean       store_app_remove_finish               (StoreApp *app, GAsyncResult *result, GError **error);
 
 void           store_app_save_to_cache               (StoreApp *app, StoreCache *cache);
 

@@ -14,6 +14,7 @@
 
 #include "store-cache.h"
 #include "store-category.h"
+#include "store-channel.h"
 #include "store-snap-app.h"
 
 G_BEGIN_DECLS
@@ -77,5 +78,15 @@ void           store_model_get_image_async                (StoreModel *model, co
                                                            GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
 
 GdkPixbuf     *store_model_get_image_finish               (StoreModel *model, GAsyncResult *result, GError **error);
+
+void           store_model_install_async                  (StoreModel *model, StoreApp *app, StoreChannel *channel,
+                                                           GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
+
+gboolean       store_model_install_finish                 (StoreModel *model, GAsyncResult *result, GError **error);
+
+void           store_model_remove_async                   (StoreModel *model, StoreApp *app,
+                                                           GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
+
+gboolean       store_model_remove_finish                  (StoreModel *model, GAsyncResult *result, GError **error);
 
 G_END_DECLS

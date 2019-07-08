@@ -18,30 +18,6 @@ struct _StoreSnapApp
 
 G_DEFINE_TYPE (StoreSnapApp, store_snap_app, store_app_get_type ())
 
-static void
-install_cb (GObject *object, GAsyncResult *result, gpointer user_data)
-{
-    GTask *task = user_data;
-
-    g_autoptr(GError) error = NULL;
-    gboolean r = snapd_client_install2_finish (SNAPD_CLIENT (object), result, &error);
-    if (!r && g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-        return;
-
-    StoreSnapApp *app = g_task_get_source_object (task);
-
-    store_app_set_progress (STORE_APP (app), NULL);
-
-    if (!r) {
-        g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to install snap: %s", error->message);
-        return;
-    }
-
-    store_app_set_installed (STORE_APP (app), TRUE);
-
-    g_task_return_boolean (task, TRUE);
-}
-
 static int
 strv_index (GStrv values, const gchar *value)
 {
@@ -118,30 +94,6 @@ find_cb (GObject *object, GAsyncResult *result, gpointer user_data)
 }
 
 static void
-remove_cb (GObject *object, GAsyncResult *result, gpointer user_data)
-{
-    GTask *task = user_data;
-
-    g_autoptr(GError) error = NULL;
-    gboolean r = snapd_client_remove_finish (SNAPD_CLIENT (object), result, &error);
-    if (!r && g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-        return;
-
-    StoreSnapApp *app = g_task_get_source_object (task);
-
-    store_app_set_progress (STORE_APP (app), NULL);
-
-    if (!r) {
-        g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to remove snap: %s", error->message);
-        return;
-    }
-
-    store_app_set_installed (STORE_APP (app), FALSE);
-
-    g_task_return_boolean (task, TRUE);
-}
-
-static void
 store_snap_app_dispose (GObject *object)
 {
     StoreSnapApp *self = STORE_SNAP_APP (object);
@@ -149,20 +101,6 @@ store_snap_app_dispose (GObject *object)
     g_clear_pointer (&self->snapd_socket_path, g_free);
 
     G_OBJECT_CLASS (store_snap_app_parent_class)->dispose (object);
-}
-
-static void
-store_snap_app_install_async (StoreApp *app, StoreChannel *channel G_GNUC_UNUSED, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
-{
-    StoreSnapApp *self = STORE_SNAP_APP (app);
-
-    g_autoptr(StoreProgress) progress = store_progress_new ();
-    store_app_set_progress (app, progress);
-
-    g_autoptr(SnapdClient) client = snapd_client_new ();
-    snapd_client_set_socket_path (client, self->snapd_socket_path);
-    GTask *task = g_task_new (app, cancellable, callback, callback_data); // FIXME: Need to combine cancellables?
-    snapd_client_install2_async (client, SNAPD_INSTALL_FLAGS_NONE, store_app_get_name (app), NULL, NULL, NULL, NULL, cancellable, install_cb, task); // FIXME: channel
 }
 
 static gboolean
@@ -193,26 +131,6 @@ store_snap_app_refresh_async (StoreApp *app, GCancellable *cancellable, GAsyncRe
 
 static gboolean
 store_snap_app_refresh_finish (StoreApp *app G_GNUC_UNUSED, GAsyncResult *result, GError **error)
-{
-    return g_task_propagate_boolean (G_TASK (result), error);
-}
-
-static void
-store_snap_app_remove_async (StoreApp *app, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
-{
-    StoreSnapApp *self = STORE_SNAP_APP (app);
-
-    g_autoptr(StoreProgress) progress = store_progress_new ();
-    store_app_set_progress (app, progress);
-
-    g_autoptr(SnapdClient) client = snapd_client_new ();
-    snapd_client_set_socket_path (client, self->snapd_socket_path);
-    GTask *task = g_task_new (self, cancellable, callback, callback_data); // FIXME: Need to combine cancellables?
-    snapd_client_remove_async (client, store_app_get_name (app), NULL, NULL, cancellable, remove_cb, task);
-}
-
-static gboolean
-store_snap_app_remove_finish (StoreApp *self G_GNUC_UNUSED, GAsyncResult *result, GError **error)
 {
     return g_task_propagate_boolean (G_TASK (result), error);
 }
@@ -332,13 +250,9 @@ static void
 store_snap_app_class_init (StoreSnapAppClass *klass)
 {
     G_OBJECT_CLASS (klass)->dispose = store_snap_app_dispose;
-    STORE_APP_CLASS (klass)->install_async = store_snap_app_install_async;
-    STORE_APP_CLASS (klass)->install_finish = store_snap_app_install_finish;
     STORE_APP_CLASS (klass)->launch = store_snap_app_launch;
     STORE_APP_CLASS (klass)->refresh_async = store_snap_app_refresh_async;
     STORE_APP_CLASS (klass)->refresh_finish = store_snap_app_refresh_finish;
-    STORE_APP_CLASS (klass)->remove_async = store_snap_app_remove_async;
-    STORE_APP_CLASS (klass)->remove_finish = store_snap_app_remove_finish;
     STORE_APP_CLASS (klass)->save_to_cache = store_snap_app_save_to_cache;
     STORE_APP_CLASS (klass)->update_from_cache = store_snap_app_update_from_cache;
 }

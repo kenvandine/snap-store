@@ -170,7 +170,7 @@ contact_link_cb (StoreAppPage *self, const gchar *uri)
 static void
 install_cb (StoreAppPage *self)
 {
-    store_app_install_async (self->app, NULL, NULL, NULL, NULL);
+    store_model_install_async (store_page_get_model (STORE_PAGE (self)), self->app, NULL, NULL, NULL, NULL);
 }
 
 static void
@@ -184,7 +184,7 @@ launch_cb (StoreAppPage *self)
 static void
 remove_cb (StoreAppPage *self)
 {
-    store_app_remove_async (self->app, NULL, NULL, NULL);
+    store_model_remove_async (store_page_get_model (STORE_PAGE (self)), self->app, NULL, NULL, NULL);
 }
 
 static void

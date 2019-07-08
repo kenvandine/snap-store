@@ -363,20 +363,6 @@ store_app_init (StoreApp *self)
     priv->screenshots = g_ptr_array_new ();
 }
 
-void
-store_app_install_async (StoreApp *self, StoreChannel *channel, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
-{
-    g_return_if_fail (STORE_IS_APP (self));
-    STORE_APP_GET_CLASS (self)->install_async (self, channel, cancellable, callback, callback_data);
-}
-
-gboolean
-store_app_install_finish (StoreApp *self, GAsyncResult *result, GError **error)
-{
-    g_return_val_if_fail (STORE_IS_APP (self), FALSE);
-    return STORE_APP_GET_CLASS (self)->install_finish (self, result, error);
-}
-
 gboolean
 store_app_launch (StoreApp *self, GError **error)
 {
@@ -396,20 +382,6 @@ store_app_refresh_finish (StoreApp *self, GAsyncResult *result, GError **error)
 {
     g_return_val_if_fail (STORE_IS_APP (self), FALSE);
     return STORE_APP_GET_CLASS (self)->refresh_finish (self, result, error);
-}
-
-void
-store_app_remove_async (StoreApp *self, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
-{
-    g_return_if_fail (STORE_IS_APP (self));
-    STORE_APP_GET_CLASS (self)->remove_async (self, cancellable, callback, callback_data);
-}
-
-gboolean
-store_app_remove_finish (StoreApp *self, GAsyncResult *result, GError **error)
-{
-    g_return_val_if_fail (STORE_IS_APP (self), FALSE);
-    return STORE_APP_GET_CLASS (self)->remove_finish (self, result, error);
 }
 
 void

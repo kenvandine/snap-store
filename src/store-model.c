@@ -637,6 +637,60 @@ search_cb (GObject *object, GAsyncResult *result, gpointer user_data)
 }
 
 static void
+install_cb (GObject *object, GAsyncResult *result, gpointer user_data)
+{
+    GTask *task = user_data;
+
+    g_autoptr(GError) error = NULL;
+    gboolean r = snapd_client_install2_finish (SNAPD_CLIENT (object), result, &error);
+    if (!r && g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
+    StoreModel *self = g_task_get_source_object (task);
+    StoreApp *app = g_task_get_task_data (task);
+
+    store_app_set_progress (app, NULL);
+
+    if (!r) {
+        g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to install snap: %s", error->message);
+        return;
+    }
+
+    store_app_set_installed (app, TRUE);
+    g_ptr_array_add (self->installed, g_object_ref (app));
+    g_object_notify (G_OBJECT (self), "installed");
+
+    g_task_return_boolean (task, TRUE);
+}
+
+static void
+remove_cb (GObject *object, GAsyncResult *result, gpointer user_data)
+{
+    GTask *task = user_data;
+
+    g_autoptr(GError) error = NULL;
+    gboolean r = snapd_client_remove_finish (SNAPD_CLIENT (object), result, &error);
+    if (!r && g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
+    StoreModel *self = g_task_get_source_object (task);
+    StoreApp *app = g_task_get_task_data (task);
+
+    store_app_set_progress (app, NULL);
+
+    if (!r) {
+        g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to remove snap: %s", error->message);
+        return;
+    }
+
+    store_app_set_installed (app, FALSE);
+    g_ptr_array_remove (self->installed, app);
+    g_object_notify (G_OBJECT (self), "installed");
+
+    g_task_return_boolean (task, TRUE);
+}
+
+static void
 store_model_dispose (GObject *object)
 {
     StoreModel *self = STORE_MODEL (object);
@@ -696,8 +750,8 @@ static void
 store_model_init (StoreModel *self)
 {
     self->cache = store_cache_new ();
-    self->categories = g_ptr_array_new ();
-    self->installed = g_ptr_array_new ();
+    self->categories = g_ptr_array_new_with_free_func (g_object_unref);;
+    self->installed = g_ptr_array_new_with_free_func (g_object_unref);;
     self->odrs_client = store_odrs_client_new ();
     self->session = soup_session_new ();
     self->snaps = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
@@ -971,4 +1025,52 @@ store_model_get_image_finish (StoreModel *self, GAsyncResult *result, GError **e
     g_return_val_if_fail (g_task_is_valid (G_TASK (result), self), NULL);
 
     return g_task_propagate_pointer (G_TASK (result), error);
+}
+
+void
+store_model_install_async (StoreModel *self, StoreApp *app, StoreChannel *channel, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
+{
+    g_return_if_fail (STORE_IS_MODEL (self));
+
+    g_assert (STORE_IS_SNAP_APP (app)); // FIXME
+
+    g_autoptr(StoreProgress) progress = store_progress_new ();
+    store_app_set_progress (app, progress);
+
+    g_autoptr(SnapdClient) client = snapd_client_new ();
+    snapd_client_set_socket_path (client, self->snapd_socket_path);
+    GTask *task = g_task_new (self, cancellable, callback, callback_data); // FIXME: Need to combine cancellables?
+    g_task_set_task_data (task, g_object_ref (app), g_object_unref);
+    snapd_client_install2_async (client, SNAPD_INSTALL_FLAGS_NONE, store_app_get_name (app), NULL, NULL, NULL, NULL, cancellable, install_cb, task); // FIXME: channel
+}
+
+gboolean
+store_model_install_finish (StoreModel *self, GAsyncResult *result, GError **error)
+{
+    g_return_val_if_fail (STORE_IS_MODEL (self), FALSE);
+    return g_task_propagate_boolean (G_TASK (result), error);
+}
+
+void
+store_model_remove_async (StoreModel *self, StoreApp *app, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
+{
+    g_return_if_fail (STORE_IS_MODEL (self));
+
+    g_assert (STORE_IS_SNAP_APP (app)); // FIXME
+
+    g_autoptr(StoreProgress) progress = store_progress_new ();
+    store_app_set_progress (app, progress);
+
+    g_autoptr(SnapdClient) client = snapd_client_new ();
+    snapd_client_set_socket_path (client, self->snapd_socket_path);
+    GTask *task = g_task_new (self, cancellable, callback, callback_data); // FIXME: Need to combine cancellables?
+    g_task_set_task_data (task, g_object_ref (app), g_object_unref);
+    snapd_client_remove_async (client, store_app_get_name (app), NULL, NULL, cancellable, remove_cb, task);
+}
+
+gboolean
+store_model_remove_finish (StoreModel *self, GAsyncResult *result, GError **error)
+{
+    g_return_val_if_fail (STORE_IS_MODEL (self), FALSE);
+    return g_task_propagate_boolean (G_TASK (result), error);
 }
