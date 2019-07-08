@@ -125,7 +125,7 @@ store_category_list_set_category (StoreCategoryList *self, StoreCategory *catego
         n_tiles++;
         children = g_list_append (children, tile);
     }
-    while (n_tiles > n_apps) {
+    if (n_tiles > n_apps) {
         for (GList *link = g_list_nth (children, n_apps); link != NULL; link = link->next) {
             StoreAppSmallTile *tile = link->data;
             gtk_container_remove (GTK_CONTAINER (self->app_box), GTK_WIDGET (tile));

@@ -169,7 +169,7 @@ store_installed_page_set_apps (StoreInstalledPage *self, GPtrArray *apps)
         n_tiles++;
         children = g_list_append (children, tile);
     }
-    while (n_tiles > apps->len) {
+    if (n_tiles > apps->len) {
         for (GList *link = g_list_nth (children, apps->len); link != NULL; link = link->next) {
             StoreAppInstalledTile *tile = link->data;
             gtk_container_remove (GTK_CONTAINER (self->app_box), GTK_WIDGET (tile));
