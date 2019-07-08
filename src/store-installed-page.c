@@ -19,8 +19,6 @@ struct _StoreInstalledPage
 
     GtkBox *app_box;
     GtkLabel *count_label;
-
-    GCancellable *cancellable;
 };
 
 enum
@@ -45,17 +43,6 @@ static void
 tile_activated_cb (StoreInstalledPage *self, StoreAppInstalledTile *tile)
 {
     g_signal_emit (self, signals[SIGNAL_APP_ACTIVATED], 0, store_app_installed_tile_get_app (tile));
-}
-
-static void
-store_installed_page_dispose (GObject *object)
-{
-    StoreInstalledPage *self = STORE_INSTALLED_PAGE (object);
-
-    g_cancellable_cancel (self->cancellable);
-    g_clear_object (&self->cancellable);
-
-    G_OBJECT_CLASS (store_installed_page_parent_class)->dispose (object);
 }
 
 static gboolean
@@ -111,7 +98,6 @@ store_installed_page_set_model (StorePage *page, StoreModel *model)
 static void
 store_installed_page_class_init (StoreInstalledPageClass *klass)
 {
-    G_OBJECT_CLASS (klass)->dispose = store_installed_page_dispose;
     G_OBJECT_CLASS (klass)->get_property = store_installed_page_get_property;
     G_OBJECT_CLASS (klass)->set_property = store_installed_page_set_property;
     STORE_PAGE_CLASS (klass)->set_model = store_installed_page_set_model;
@@ -138,8 +124,6 @@ store_installed_page_class_init (StoreInstalledPageClass *klass)
 static void
 store_installed_page_init (StoreInstalledPage *self)
 {
-    self->cancellable = g_cancellable_new ();
-
     store_page_get_type ();
     gtk_widget_init_template (GTK_WIDGET (self));
 }
