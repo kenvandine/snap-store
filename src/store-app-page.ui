@@ -140,7 +140,6 @@
                             <child>
                               <object class="GtkLabel" id="remove_label">
                                 <property name="visible">True</property>
-                                <property name="label" translatable="yes" comments="Label on button to remove an app">Remove</property>
                                 <style>
                                   <class name="app-page-remove-button-label"/>
                                 </style>
@@ -170,7 +169,6 @@
                             <child>
                               <object class="GtkLabel" id="install_label">
                                 <property name="visible">True</property>
-                                <property name="label" translatable="yes" comments="Label on button to install an app">Install</property>
                                 <style>
                                   <class name="app-page-install-button-label"/>
                                 </style>
