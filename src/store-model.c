@@ -691,6 +691,33 @@ remove_cb (GObject *object, GAsyncResult *result, gpointer user_data)
 }
 
 static void
+refresh_cb (GObject *object, GAsyncResult *result, gpointer user_data)
+{
+    g_autoptr(GTask) task = user_data;
+
+    g_autoptr(GError) error = NULL;
+    g_autoptr(GPtrArray) snaps = snapd_client_find_finish (SNAPD_CLIENT (object), result, NULL, &error);
+    if (snaps == NULL) {
+        if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+            return;
+        g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to get snap information: %s", error->message);
+        return;
+    }
+
+    if (snaps->len != 1) {
+        g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_FAILED, "Snap find returned %d results, expected 1", snaps->len);
+        return;
+    }
+
+    StoreSnapApp *app = g_task_get_task_data (task);
+    SnapdSnap *snap = g_ptr_array_index (snaps, 0);
+
+    store_snap_app_update_from_search (app, snap);
+
+    g_task_return_boolean (task, TRUE);
+}
+
+static void
 store_model_dispose (GObject *object)
 {
     StoreModel *self = STORE_MODEL (object);
@@ -821,7 +848,6 @@ store_model_get_snap (StoreModel *self, const gchar *name)
     StoreSnapApp *snap = g_hash_table_lookup (self->snaps, name);
     if (snap == NULL) {
         snap = store_snap_app_new ();
-        store_snap_app_set_snapd_socket_path (snap, self->snapd_socket_path);
         store_app_set_name (STORE_APP (snap), name);
         g_hash_table_insert (self->snaps, g_strdup (name), snap); // FIXME: Use a weak ref to clean out when no-longer used
     }
@@ -1070,6 +1096,27 @@ store_model_remove_async (StoreModel *self, StoreApp *app, GCancellable *cancell
 
 gboolean
 store_model_remove_finish (StoreModel *self, GAsyncResult *result, GError **error)
+{
+    g_return_val_if_fail (STORE_IS_MODEL (self), FALSE);
+    return g_task_propagate_boolean (G_TASK (result), error);
+}
+
+void
+store_model_refresh_async (StoreModel *self, StoreApp *app, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
+{
+    g_return_if_fail (STORE_IS_MODEL (self));
+
+    g_assert (STORE_IS_SNAP_APP (app)); // FIXME
+
+    g_autoptr(SnapdClient) client = snapd_client_new ();
+    snapd_client_set_socket_path (client, self->snapd_socket_path);
+    GTask *task = g_task_new (self, cancellable, callback, callback_data); // FIXME: Need to combine cancellables?
+    g_task_set_task_data (task, g_object_ref (app), g_object_unref);
+    snapd_client_find_async (client, SNAPD_FIND_FLAGS_MATCH_NAME, store_app_get_name (app), cancellable, refresh_cb, task);
+}
+
+gboolean
+store_model_refresh_finish (StoreModel *self, GAsyncResult *result, GError **error)
 {
     g_return_val_if_fail (STORE_IS_MODEL (self), FALSE);
     return g_task_propagate_boolean (G_TASK (result), error);

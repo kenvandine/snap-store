@@ -89,4 +89,10 @@ void           store_model_remove_async                   (StoreModel *model, St
 
 gboolean       store_model_remove_finish                  (StoreModel *model, GAsyncResult *result, GError **error);
 
+void           store_model_refresh_async                  (StoreModel *model, StoreApp *app,
+                                                           GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
+
+gboolean       store_model_refresh_finish                 (StoreModel *model, GAsyncResult *result, GError **error);
+
+
 G_END_DECLS

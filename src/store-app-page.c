@@ -133,7 +133,7 @@ static void
 refresh_cb (GObject *object, GAsyncResult *result, gpointer user_data G_GNUC_UNUSED)
 {
     g_autoptr(GError) error = NULL;
-    if (!store_app_refresh_finish (STORE_APP (object), result, &error)) {
+    if (!store_model_refresh_finish (STORE_MODEL (object), result, &error)) {
         if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
             return;
         g_warning ("Failed to refresh app: %s", error->message);
@@ -302,7 +302,7 @@ store_app_page_set_app (StoreAppPage *self, StoreApp *app)
 
     g_cancellable_cancel (self->cancellable);
     self->cancellable = g_cancellable_new ();
-    store_app_refresh_async (app, self->cancellable, refresh_cb, self);
+    store_model_refresh_async (store_page_get_model (STORE_PAGE (self)), app, self->cancellable, refresh_cb, self);
 
     g_object_bind_property (app, "title", self->title_label, "label", G_BINDING_SYNC_CREATE);
     g_object_bind_property (app, "publisher", self->publisher_label, "label", G_BINDING_SYNC_CREATE);

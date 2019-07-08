@@ -371,20 +371,6 @@ store_app_launch (StoreApp *self, GError **error)
 }
 
 void
-store_app_refresh_async (StoreApp *self, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
-{
-    g_return_if_fail (STORE_IS_APP (self));
-    STORE_APP_GET_CLASS (self)->refresh_async (self, cancellable, callback, callback_data);
-}
-
-gboolean
-store_app_refresh_finish (StoreApp *self, GAsyncResult *result, GError **error)
-{
-    g_return_val_if_fail (STORE_IS_APP (self), FALSE);
-    return STORE_APP_GET_CLASS (self)->refresh_finish (self, result, error);
-}
-
-void
 store_app_save_to_cache (StoreApp *self, StoreCache *cache)
 {
     g_return_if_fail (STORE_IS_APP (self));

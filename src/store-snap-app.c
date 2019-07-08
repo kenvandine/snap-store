@@ -12,8 +12,6 @@
 struct _StoreSnapApp
 {
     StoreApp parent_instance;
-
-    gchar *snapd_socket_path; // FIXME Make obsolete by having all the client code in StoreModel
 };
 
 G_DEFINE_TYPE (StoreSnapApp, store_snap_app, store_app_get_type ())
@@ -66,49 +64,6 @@ compare_channel (gconstpointer a, gconstpointer b, gpointer user_data)
     return g_strcmp0 (snapd_channel_get_branch (channel_a), snapd_channel_get_branch (channel_b));
 }
 
-static void
-find_cb (GObject *object, GAsyncResult *result, gpointer user_data)
-{
-    g_autoptr(GTask) task = user_data;
-
-    g_autoptr(GError) error = NULL;
-    g_autoptr(GPtrArray) snaps = snapd_client_find_finish (SNAPD_CLIENT (object), result, NULL, &error);
-    if (snaps == NULL) {
-        if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-            return;
-        g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to get snap information: %s", error->message);
-        return;
-    }
-
-    if (snaps->len != 1) {
-        g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_FAILED, "Snap find returned %d results, expected 1", snaps->len);
-        return;
-    }
-
-    StoreSnapApp *self = g_task_get_source_object (task);
-    SnapdSnap *snap = g_ptr_array_index (snaps, 0);
-
-    store_snap_app_update_from_search (self, snap);
-
-    g_task_return_boolean (task, TRUE);
-}
-
-static void
-store_snap_app_dispose (GObject *object)
-{
-    StoreSnapApp *self = STORE_SNAP_APP (object);
-
-    g_clear_pointer (&self->snapd_socket_path, g_free);
-
-    G_OBJECT_CLASS (store_snap_app_parent_class)->dispose (object);
-}
-
-static gboolean
-store_snap_app_install_finish (StoreApp *app G_GNUC_UNUSED, GAsyncResult *result, GError **error)
-{
-    return g_task_propagate_boolean (G_TASK (result), error);
-}
-
 static gboolean
 store_snap_app_launch (StoreApp *app, GError **error)
 {
@@ -116,23 +71,6 @@ store_snap_app_launch (StoreApp *app, GError **error)
     // FIXME: Use desktop file if available
     // FIXME: Won't handle command line apps
     return g_spawn_command_line_async (command_line, error);
-}
-
-static void
-store_snap_app_refresh_async (StoreApp *app, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data)
-{
-    StoreSnapApp *self = STORE_SNAP_APP (app);
-
-    g_autoptr(SnapdClient) client = snapd_client_new ();
-    snapd_client_set_socket_path (client, self->snapd_socket_path);
-    GTask *task = g_task_new (self, cancellable, callback, callback_data); // FIXME: Need to combine cancellables?
-    snapd_client_find_async (client, SNAPD_FIND_FLAGS_MATCH_NAME, store_app_get_name (app), cancellable, find_cb, task);
-}
-
-static gboolean
-store_snap_app_refresh_finish (StoreApp *app G_GNUC_UNUSED, GAsyncResult *result, GError **error)
-{
-    return g_task_propagate_boolean (G_TASK (result), error);
 }
 
 static void
@@ -249,10 +187,7 @@ store_snap_app_update_from_cache (StoreApp *self, StoreCache *cache)
 static void
 store_snap_app_class_init (StoreSnapAppClass *klass)
 {
-    G_OBJECT_CLASS (klass)->dispose = store_snap_app_dispose;
     STORE_APP_CLASS (klass)->launch = store_snap_app_launch;
-    STORE_APP_CLASS (klass)->refresh_async = store_snap_app_refresh_async;
-    STORE_APP_CLASS (klass)->refresh_finish = store_snap_app_refresh_finish;
     STORE_APP_CLASS (klass)->save_to_cache = store_snap_app_save_to_cache;
     STORE_APP_CLASS (klass)->update_from_cache = store_snap_app_update_from_cache;
 }
@@ -283,14 +218,6 @@ is_screenshot (SnapdMedia *media)
         return FALSE;
 
     return TRUE;
-}
-
-void
-store_snap_app_set_snapd_socket_path (StoreSnapApp *self, const gchar *path)
-{
-    g_return_if_fail (STORE_IS_SNAP_APP (self));
-    g_free (self->snapd_socket_path);
-    self->snapd_socket_path = g_strdup (path);
 }
 
 void

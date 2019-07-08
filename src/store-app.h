@@ -25,17 +25,11 @@ struct _StoreAppClass
     GObjectClass parent_class;
 
     gboolean  (*launch)            (StoreApp *app, GError **error);
-    void      (*refresh_async)     (StoreApp *app, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
-    gboolean  (*refresh_finish)    (StoreApp *app, GAsyncResult *result, GError **error);
     void      (*save_to_cache)     (StoreApp *app, StoreCache *cache);
     void      (*update_from_cache) (StoreApp *app, StoreCache *cache);
 };
 
 gboolean       store_app_launch                      (StoreApp *app, GError **error);
-
-void           store_app_refresh_async               (StoreApp *app, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer callback_data);
-
-gboolean       store_app_refresh_finish              (StoreApp *app, GAsyncResult *result, GError **error);
 
 void           store_app_save_to_cache               (StoreApp *app, StoreCache *cache);
 
