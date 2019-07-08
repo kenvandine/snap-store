@@ -637,6 +637,21 @@ search_cb (GObject *object, GAsyncResult *result, gpointer user_data)
 }
 
 static void
+progress_cb (SnapdClient *client G_GNUC_UNUSED, SnapdChange *change, gpointer deprecated G_GNUC_UNUSED, gpointer user_data)
+{
+    GTask *task = user_data;
+
+    StoreApp *app = g_task_get_task_data (task);
+    g_printerr ("%s:\n", store_app_get_name (app));
+    GPtrArray *tasks = snapd_change_get_tasks (change);
+    for (guint i = 0; i < tasks->len; i++) {
+        SnapdTask *task = g_ptr_array_index (tasks, i);
+        g_printerr ("  summary: %s\n", snapd_task_get_summary (task));
+        g_printerr ("  progress: %s %" G_GINT64_FORMAT "/%" G_GINT64_FORMAT "\n", snapd_task_get_progress_label (task), snapd_task_get_progress_done (task), snapd_task_get_progress_total (task));
+    }
+}
+
+static void
 install_cb (GObject *object, GAsyncResult *result, gpointer user_data)
 {
     GTask *task = user_data;
@@ -1070,7 +1085,7 @@ store_model_install_async (StoreModel *self, StoreApp *app, StoreChannel *channe
     const gchar *channel_name = NULL;
     if (channel != NULL)
         store_channel_get_name (channel);
-    snapd_client_install2_async (client, SNAPD_INSTALL_FLAGS_NONE, store_app_get_name (app), channel_name, NULL, NULL, NULL, cancellable, install_cb, task);
+    snapd_client_install2_async (client, SNAPD_INSTALL_FLAGS_NONE, store_app_get_name (app), channel_name, NULL, progress_cb, task, cancellable, install_cb, task);
 }
 
 gboolean
@@ -1094,7 +1109,7 @@ store_model_remove_async (StoreModel *self, StoreApp *app, GCancellable *cancell
     snapd_client_set_socket_path (client, self->snapd_socket_path);
     GTask *task = g_task_new (self, cancellable, callback, callback_data); // FIXME: Need to combine cancellables?
     g_task_set_task_data (task, g_object_ref (app), g_object_unref);
-    snapd_client_remove_async (client, store_app_get_name (app), NULL, NULL, cancellable, remove_cb, task);
+    snapd_client_remove_async (client, store_app_get_name (app), progress_cb, task, cancellable, remove_cb, task);
 }
 
 gboolean
