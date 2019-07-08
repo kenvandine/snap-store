@@ -646,6 +646,7 @@ progress_cb (SnapdClient *client G_GNUC_UNUSED, SnapdChange *change, gpointer de
     GPtrArray *tasks = snapd_change_get_tasks (change);
     for (guint i = 0; i < tasks->len; i++) {
         SnapdTask *task = g_ptr_array_index (tasks, i);
+        g_printerr ("  kind: %s\n", snapd_task_get_kind (task));
         g_printerr ("  summary: %s\n", snapd_task_get_summary (task));
         g_printerr ("  progress: %s %" G_GINT64_FORMAT "/%" G_GINT64_FORMAT "\n", snapd_task_get_progress_label (task), snapd_task_get_progress_done (task), snapd_task_get_progress_total (task));
     }
