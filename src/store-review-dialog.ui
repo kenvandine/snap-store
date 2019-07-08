@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="StoreReviewDialog" parent="GtkDialog">
+    <child internal-child="headerbar">
+      <object class="GtkHeaderBar">
+        <property name="title" translatable="yes" comments="Title of write review dialog">Write Review</property>
+      </object>
+    </child>
+    <child internal-child="vbox">
+      <object class="GtkBox">
+        <child>
+          <object class="GtkEntry" id="summary_entry">
+            <property name="visible">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="description_entry">
+            <property name="visible">True</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
