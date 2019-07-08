@@ -106,7 +106,7 @@ ratings_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *pat
     for (guint i = 0; i < self->apps->len; i++) {
         MockApp *app = g_ptr_array_index (self->apps, i);
 
-        gint64 count0, count1, count2 = 0, count3 = 0, count4 = 0, count5 = 0;
+        gint64 count0 = 0, count1 = 0, count2 = 0, count3 = 0, count4 = 0, count5 = 0;
         for (guint j = 0; j < app->reviews->len; j++) {
             MockReview *review = g_ptr_array_index (app->reviews, j);
             if (review->rating == 0)
@@ -429,12 +429,12 @@ mock_odrs_server_init (MockOdrsServer *self)
     self->apps = g_ptr_array_new_with_free_func ((GDestroyNotify) mock_app_free);
 
     g_object_set (self, "server-header", "mock-odrs", NULL);
-    soup_server_add_handler (SOUP_SERVER (self), "/ratings", ratings_cb, self, NULL);
-    soup_server_add_handler (SOUP_SERVER (self), "/fetch", fetch_cb, self, NULL);
-    soup_server_add_handler (SOUP_SERVER (self), "/submit", submit_cb, self, NULL);
-    soup_server_add_handler (SOUP_SERVER (self), "/upvote", feedback_cb, self, NULL);
-    soup_server_add_handler (SOUP_SERVER (self), "/downvote", feedback_cb, self, NULL);
-    soup_server_add_handler (SOUP_SERVER (self), "/report", feedback_cb, self, NULL);
+    soup_server_add_handler (SOUP_SERVER (self), "/1.0/reviews/api/ratings", ratings_cb, self, NULL);
+    soup_server_add_handler (SOUP_SERVER (self), "/1.0/reviews/api/fetch", fetch_cb, self, NULL);
+    soup_server_add_handler (SOUP_SERVER (self), "/1.0/reviews/api/submit", submit_cb, self, NULL);
+    soup_server_add_handler (SOUP_SERVER (self), "/1.0/reviews/api/upvote", feedback_cb, self, NULL);
+    soup_server_add_handler (SOUP_SERVER (self), "/1.0/reviews/api/downvote", feedback_cb, self, NULL);
+    soup_server_add_handler (SOUP_SERVER (self), "/1.0/reviews/api/report", feedback_cb, self, NULL);
 }
 
 MockOdrsServer *
