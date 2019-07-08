@@ -633,7 +633,7 @@ search_cb (GObject *object, GAsyncResult *result, gpointer user_data)
         g_ptr_array_add (apps, g_steal_pointer (&app));
     }
 
-    g_task_return_pointer (task, apps, (GDestroyNotify) g_ptr_array_unref);
+    g_task_return_pointer (task, g_steal_pointer (&apps), (GDestroyNotify) g_ptr_array_unref);
 }
 
 static void
