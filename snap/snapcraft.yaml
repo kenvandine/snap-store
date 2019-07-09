@@ -55,6 +55,19 @@ apps:
       - wayland
       - system-observe
       - upower-observe
+  ubuntu-store:
+    command: bin/desktop-launch ${SNAP}/usr/bin/snap-store
+    desktop: usr/share/applications/com.ubuntu.Store.desktop
+    plugs:
+      - desktop
+      - desktop-legacy
+      - gsettings
+      - network
+      - snapd-control
+      - unity7
+      - wayland
+      - system-observe
+      - upower-observe
 
 parts:
   desktop-gnome-platform:

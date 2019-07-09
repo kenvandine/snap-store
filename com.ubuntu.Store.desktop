@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=Snap Store
+Name=Ubuntu Store
 Comment=Add, remove or update software on this computer
 Icon=${SNAP}/meta/gui/io.snapcraft.Store.png
 Exec=snap-store
 Type=Application
+OnlyShowIn=ubuntu;
 Keywords=
-NotShowIn=ubuntu;

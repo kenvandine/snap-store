@@ -25,6 +25,7 @@ snapd_glib_dep = dependency('snapd-glib')
 soup_dep = dependency('libsoup-2.4')
 
 install_data('io.snapcraft.Store.desktop', install_dir: join_paths(get_option('datadir'), 'applications'))
+install_data('com.ubuntu.Store.desktop', install_dir: join_paths(get_option('datadir'), 'applications'))
 
 subdir('po')
 subdir('src')
