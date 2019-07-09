@@ -15,7 +15,7 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (MockOdrsServer, mock_odrs_server, MOCK, ODRS_SERVER, SoupServer)
 
-typedef struct _MockApp MockApp;
+typedef struct _MockOdrsApp MockOdrsApp;
 typedef struct _MockReview MockReview;
 
 MockOdrsServer *mock_odrs_server_new         (void);
@@ -24,13 +24,15 @@ void            mock_odrs_server_set_port    (MockOdrsServer *server, guint port
 
 guint           mock_odrs_server_get_port    (MockOdrsServer *server);
 
-MockApp        *mock_odrs_server_add_app     (MockOdrsServer *server, const gchar *id);
+gboolean        mock_odrs_server_start       (MockOdrsServer *self, GError **error);
 
-MockApp        *mock_odrs_server_find_app    (MockOdrsServer *server, const gchar *id);
+MockOdrsApp    *mock_odrs_server_add_app     (MockOdrsServer *server, const gchar *id);
 
-MockReview     *mock_app_add_review          (MockApp *app);
+MockOdrsApp    *mock_odrs_server_find_app    (MockOdrsServer *server, const gchar *id);
 
-MockReview     *mock_app_find_review         (MockApp *app, gint64 id);
+MockReview     *mock_app_add_review          (MockOdrsApp *app);
+
+MockReview     *mock_app_find_review         (MockOdrsApp *app, gint64 id);
 
 void            mock_review_set_locale       (MockReview *review, const gchar *locale);
 

@@ -23,7 +23,7 @@ G_DEFINE_TYPE (MockOdrsServer, mock_odrs_server, SOUP_TYPE_SERVER)
 
 struct _MockReview
 {
-    MockApp *app;
+    MockOdrsApp *app;
     gint64 id;
     gint64 rating;
     gchar *locale;
@@ -40,7 +40,7 @@ struct _MockReview
 };
 
 static MockReview *
-mock_review_new (MockApp *app)
+mock_review_new (MockOdrsApp *app)
 {
     MockReview *review = g_new0 (MockReview, 1);
     review->app = app;
@@ -60,23 +60,23 @@ mock_review_free (MockReview *review)
     g_list_free_full (review->voters, g_free);
 }
 
-struct _MockApp
+struct _MockOdrsApp
 {
     gchar *id;
     GPtrArray *reviews;
 };
 
-static MockApp *
+static MockOdrsApp *
 mock_app_new (const gchar *id)
 {
-    MockApp *app = g_new0 (MockApp, 1);
+    MockOdrsApp *app = g_new0 (MockOdrsApp, 1);
     app->id = g_strdup (id);
     app->reviews = g_ptr_array_new_with_free_func ((GDestroyNotify) mock_review_free);
     return app;
 }
 
 static void
-mock_app_free (MockApp *app)
+mock_app_free (MockOdrsApp *app)
 {
     g_free (app->id);
     g_ptr_array_unref (app->reviews);
@@ -108,7 +108,7 @@ ratings_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *pat
     g_autoptr(JsonBuilder) builder = json_builder_new ();
     json_builder_begin_object (builder);
     for (guint i = 0; i < self->apps->len; i++) {
-        MockApp *app = g_ptr_array_index (self->apps, i);
+        MockOdrsApp *app = g_ptr_array_index (self->apps, i);
 
         gint64 count0 = 0, count1 = 0, count2 = 0, count3 = 0, count4 = 0, count5 = 0;
         for (guint j = 0; j < app->reviews->len; j++) {
@@ -244,7 +244,7 @@ fetch_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *path 
     if (json_object_has_member (object, "limit"))
         limit = json_object_get_int_member (object, "limit");
 
-    MockApp *app = mock_odrs_server_find_app (self, app_id);
+    MockOdrsApp *app = mock_odrs_server_find_app (self, app_id);
 
     g_autofree gchar *user_skey = calculate_user_skey (user_hash);
 
@@ -345,7 +345,7 @@ submit_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *path
 
     g_autoptr(GDateTime) date_created = g_date_time_new_now_utc ();
 
-    MockApp *app = mock_odrs_server_add_app (self, app_id);
+    MockOdrsApp *app = mock_odrs_server_add_app (self, app_id);
     MockReview *review = mock_app_add_review (app);
     mock_review_set_locale (review, locale);
     mock_review_set_distro (review, distro);
@@ -399,7 +399,7 @@ feedback_cb (SoupServer *server G_GNUC_UNUSED, SoupMessage *msg, const gchar *pa
         return;
     }
 
-    MockApp *app = mock_odrs_server_find_app (self, app_id);
+    MockOdrsApp *app = mock_odrs_server_find_app (self, app_id);
     if (app == NULL) {
         respond (msg, FALSE, "invalid app_id");
         return;
@@ -502,12 +502,12 @@ mock_odrs_server_start (MockOdrsServer *self, GError **error)
     return soup_server_listen_local (SOUP_SERVER (self), self->port, 0, error);
 }
 
-MockApp *
+MockOdrsApp *
 mock_odrs_server_add_app (MockOdrsServer *self, const gchar *id)
 {
     g_return_val_if_fail (MOCK_IS_ODRS_SERVER (self), NULL);
 
-    MockApp *app = mock_odrs_server_find_app (self, id);
+    MockOdrsApp *app = mock_odrs_server_find_app (self, id);
     if (app == NULL) {
         app = mock_app_new (id);
         g_ptr_array_add (self->apps, app);
@@ -516,13 +516,13 @@ mock_odrs_server_add_app (MockOdrsServer *self, const gchar *id)
     return app;
 }
 
-MockApp *
+MockOdrsApp *
 mock_odrs_server_find_app (MockOdrsServer *self, const gchar *id)
 {
     g_return_val_if_fail (MOCK_IS_ODRS_SERVER (self), NULL);
 
     for (guint i = 0; i < self->apps->len; i++) {
-        MockApp *app = g_ptr_array_index (self->apps, i);
+        MockOdrsApp *app = g_ptr_array_index (self->apps, i);
         if (g_strcmp0 (app->id, id) == 0)
             return app;
     }
@@ -531,7 +531,7 @@ mock_odrs_server_find_app (MockOdrsServer *self, const gchar *id)
 }
 
 MockReview *
-mock_app_add_review (MockApp *app)
+mock_app_add_review (MockOdrsApp *app)
 {
     MockReview *review = mock_review_new (app);
     g_ptr_array_add (app->reviews, review);
@@ -539,7 +539,7 @@ mock_app_add_review (MockApp *app)
 }
 
 MockReview *
-mock_app_find_review (MockApp *app, gint64 id)
+mock_app_find_review (MockOdrsApp *app, gint64 id)
 {
     for (guint i = 0; i < app->reviews->len; i++) {
         MockReview *review = g_ptr_array_index (app->reviews, i);
@@ -621,27 +621,4 @@ mock_review_has_voter (MockReview *review, const gchar *user_hash)
     }
 
     return FALSE;
-}
-
-int
-main (int argc, char **argv)
-{
-    g_autoptr(GMainLoop) loop = g_main_loop_new (NULL, FALSE);
-
-    guint port = 0;
-    if (argc > 1)
-        port = atoi (argv[1]);
-
-    g_autoptr(MockOdrsServer) server = mock_odrs_server_new ();
-    mock_odrs_server_set_port (server, port);
-    g_autoptr(GError) error = NULL;
-    if (!mock_odrs_server_start (server, &error)) {
-        g_printerr ("Failed to start server: %s\n", error->message);
-        return EXIT_FAILURE;
-    }
-    g_printerr ("Listening on port %u\n", mock_odrs_server_get_port (server));
-
-    g_main_loop_run (loop);
-
-    return EXIT_SUCCESS;
 }

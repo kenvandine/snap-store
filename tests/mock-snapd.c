@@ -3550,21 +3550,3 @@ mock_snapd_init (MockSnapd *snapd)
     g_clear_error (&error);
     snapd->socket_path = g_build_filename (snapd->dir_path, "snapd.socket", NULL);
 }
-
-int
-main (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED)
-{
-    g_autoptr(GMainLoop) loop = g_main_loop_new (NULL, FALSE);
-
-    g_autoptr(MockSnapd) server = mock_snapd_new ();
-    g_autoptr(GError) error = NULL;
-    if (!mock_snapd_start (server, &error)) {
-        g_printerr ("Failed to start server: %s\n", error->message);
-        return EXIT_FAILURE;
-    }
-    g_printerr ("Listening on socket %s\n", mock_snapd_get_socket_path (server));
-
-    g_main_loop_run (loop);
-
-    return EXIT_SUCCESS;
-}
