@@ -354,7 +354,7 @@ store_odrs_client_update_ratings_async (StoreOdrsClient *self,
 {
     g_return_if_fail (STORE_IS_ODRS_CLIENT (self));
 
-    g_autofree gchar *uri= g_strdup_printf ("%s/1.0/reviews/api/ratings", self->server_uri);
+    g_autofree gchar *uri = g_strdup_printf ("%s/1.0/reviews/api/ratings", self->server_uri);
     g_autoptr(SoupMessage) message = soup_message_new ("GET", uri);
 
     GTask *task = g_task_new (self, cancellable, callback, callback_data); // FIXME: Need to combine cancellables?
@@ -379,7 +379,7 @@ store_odrs_client_get_reviews_async (StoreOdrsClient *self, const gchar *app_id,
     if (version == NULL)
         version = "unknown";
 
-    g_autofree gchar *uri= g_strdup_printf ("%s/1.0/reviews/api/fetch", self->server_uri);
+    g_autofree gchar *uri = g_strdup_printf ("%s/1.0/reviews/api/fetch", self->server_uri);
     g_autoptr(SoupMessage) message = soup_message_new ("POST", uri);
 
     g_autoptr(JsonBuilder) builder = json_builder_new ();
@@ -442,7 +442,7 @@ store_odrs_client_submit_async (StoreOdrsClient *self, const gchar *user_skey, c
     g_return_if_fail (STORE_IS_ODRS_CLIENT (self));
     g_return_if_fail (app_id != NULL);
 
-    g_autofree gchar *uri= g_strdup_printf ("%s/1.0/reviews/api/submit", self->server_uri);
+    g_autofree gchar *uri = g_strdup_printf ("%s/1.0/reviews/api/submit", self->server_uri);
     g_autoptr(SoupMessage) message = soup_message_new ("POST", uri);
 
     g_autoptr(JsonBuilder) builder = json_builder_new ();
